@@ -16,6 +16,14 @@ function verify_login() {
         global $dbAddr;
         global $dbName;
 
+        if (!isset($_POST["username"]) || !is_string($_POST["username"]) || $_POST["username"] === "") {
+            return "you must enter a username.";
+        }
+
+        if (!isset($_POST["password"]) || !is_string($_POST["password"]) || $_POST["password"] === "") {
+            return "you must enter a password.";
+        }
+
         $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
         if ($sqlconn->connect_error) {
             return "something went wrong.";

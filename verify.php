@@ -8,7 +8,7 @@ function verify_and_submit() {
     global $dbName;
 
     if (!isset($_SESSION["formdata"]) || !isset($_SESSION["verifycode"]) || !isset($_SESSION["expires"]) ||
-        !isset($_POST["code"]) || time() >= $_SESSION["expires"] || $_SESSION["verifycode"] != $_POST["code"]) {
+        !isset($_POST["code"]) || !is_string($_POST["code"]) || time() >= $_SESSION["expires"] || $_SESSION["verifycode"] !== $_POST["code"]) {
         return "you have entered an incorrect or expired email verification code.";
     }
 

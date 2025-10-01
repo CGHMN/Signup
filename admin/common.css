@@ -1,0 +1,61 @@
+body {
+    margin: 0;
+}
+
+#topbar {
+    background-color: #d0d0d0;
+}
+
+#titlebar {
+    margin: 0;
+    padding-left: 20px;
+}
+
+#menubar {
+    position: sticky;
+}
+
+#menubar ol {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-item {
+    height: 40px;
+    padding: 0 10px;
+    width: 100px;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    color: black;
+}
+
+.menu-item:hover {
+    background-color: #9b9b9b;
+}
+
+.data-table {
+    border: 1px solid black;
+    margin: 10px auto;
+}
+
+.data-table tbody tr * {
+    border: 1px solid black;
+}
+
+.form-header {
+    margin: 0 0 0 10px;
+}
+
+.form {
+    margin-left: 10px;
+}
+
+.form-label {
+    text-align: right;
+}
+
+.data-table-footer {
+    margin-left: 10px;
+}

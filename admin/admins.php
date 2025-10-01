@@ -115,7 +115,7 @@ if ($_POST) {
 }
 
 # Header
-print_header("User Management");
+print_header("Admin Management");
 
 # If the user just attempted to create a user, let them know if that succeeded.
 if ($_POST) {

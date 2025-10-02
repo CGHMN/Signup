@@ -76,7 +76,7 @@ if ($_POST) {
             <input type="text" id="username" name="username"><br>
             <label for="password">Password:</label><br>
             <input type="password" id="password" name="password"><br>
-            <input type="submit">
+            <input type="submit" value="Log In">
         </form>
     </body>
 </html>

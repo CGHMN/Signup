@@ -122,12 +122,31 @@ function process_requests() {
     global $dbName;
     global $router;
     global $rtrAPIKey;
+    global $perm;
+
+    # If the user doesn't have permission to manage requests, return.
+    if ($_SESSION["permissions"] & $perm["manage-requests"]) {
+        return null;
+    }
 
     $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
     if ($sqlconn->connect_error) {
-        return null;
+        return "failed to connect to the database.";
     }
-    $retVal = array("approved" => 0, "rejected" => 0);
+    $retVal = array("approved" => 0, "rejected" => 0, "errors" => array());
+
+    # Build the two cURL handles we'll use. Hopefully this is correct.
+    $chPost = curl_init();
+    curl_setopt($chPost, CURLOPT_URL, $router . "api/v1/servers/1/gen_new_peer");
+    curl_setopt($chPost, CURLOPT_POST, 1);
+    curl_setopt($chPost, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($chPost, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
+
+    $chGet = curl_init();
+    curl_setopt($chGet, CURLOPT_POST, 0);
+    curl_setopt($chGet, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($chGet, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
+
     foreach ($_SESSION["Requests"] as $id => $req) {
         $name = sprintf("decision-%u", $id);
         if (isset($_POST[$name]) && is_string($_POST[$name])) {
@@ -141,32 +160,47 @@ function process_requests() {
                     );
 
                     # Build cURL request
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/gen_new_peer");
-                    curl_setopt($ch, CURLOPT_POST, 1);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($apiReq));
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
+                    curl_setopt($chPost, CURLOPT_POSTFIELDS, http_build_query($apiReq));
 
                     # Execute the request.
-                    $response = curl_exec($ch);
-                    if ($response) {
-                        # Decode the JSON response and send a confirmation email to the user.
-                        $decodedRes = json_decode($response, true);
-                        if (mail($req["Email"], "Welcome to CGHMN!", 
-                            "Dear {$req["Username"]},\r\n" .
-                            "Welcome to CGHMN!\r\n" .
-                            "Your tunnel IP is {$decodedRes["tunnel_ip"]}\r\n" .
-                            "And your routed subnet is {$decodedRes["allowed_ips"][0]}.")) {
-                            $stmt = $sqlconn->prepare("DELETE FROM $dbName.Requests WHERE ID = ?");
-                            $stmt->bind_param("i", $req["ID"]);
-                            if ($stmt->execute()) {
-                                $retVal["approved"]++;
-                            }
-                            $stmt->close();
-                        }
+                    $response = curl_exec($chPost);
+                    if (!$response || !is_string($response)) {
+                        array_push($retVal["errors"], "The router didn't respond to the API request.");
+                        break;
                     }
-                    curl_close($ch);
+                    # Decode the JSON response and check for errors.
+                    $decodedRes = json_decode($response, true);
+                    if ($decodedRes["message"]) {
+                        array_push($retVal["errors"], "The router encountered an error: \"{$decodedRes["message"]}\".");
+                        break;
+                    }
+                    if (!isset($decodedRes["id"]) || !isset($decodedRes["tunnel_ip"]) || !isset($decodedRes["allowed_ips"]) ||
+                        !isset($decodedRes["preshared_key"])) {
+                        array_push($retVal["errors"], "The router encountered an unknown error.");
+                        break;
+                    }
+                    # Get the example config
+                    curl_setopt($chGet, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$decodedRes["id"]}/config");
+                    $response = curl_exec($chGet);
+                    if (!$response || !is_string($response)) {
+                        array_push($retVal["errors"], "The router didn't respond to the API request.");
+                        break;
+                    }
+                    if (mail($req["Email"], "Welcome to CGHMN!", 
+                        "Dear {$req["Username"]},\r\n" .
+                        "Welcome to CGHMN!\r\n" .
+                        "Your tunnel IP is {$decodedRes["tunnel_ip"]},\r\n" .
+                        "Your WireGuard Preshared Key is {$decodedRes["preshared_key"]},\r\n" . 
+                        "And your routed subnet is {$decodedRes["allowed_ips"][0]}.\r\n" .
+                        "Here's an example config you can use:\r\n" .
+                        $response)) {
+                        $stmt = $sqlconn->prepare("DELETE FROM $dbName.Requests WHERE ID = ?");
+                        $stmt->bind_param("i", $req["ID"]);
+                        if ($stmt->execute()) {
+                            $retVal["approved"]++;
+                        }
+                        $stmt->close();
+                    }
                     break;
                 case "reject":
                     $stmt = $sqlconn->prepare("DELETE FROM $dbName.Requests WHERE ID = ?");
@@ -182,11 +216,12 @@ function process_requests() {
             }
         }
     }
+    curl_close($chGet);
+    curl_close($chPost);
     $sqlconn->close();
     return $retVal;
 }
 
-$reqResult = false;
 # If we recieved a list of decisions, process them.
 if ($_POST && isset($_SESSION["Requests"]) && is_array($_SESSION["Requests"])) {
     $reqResult = process_requests();
@@ -200,11 +235,21 @@ echo "<div>";
 draw_requests_table();
 
 # Print the outcome of processing the requests.
-if ($reqResult !== false) {
+if (isset($reqResult)) {
     if ($reqResult == null) {
         echo "<p>Something went wrong handling requests.</p>";
+    } else if (is_string($reqResult)) {
+        echo "<p>Sorry, $reqResult Please try again later</p>";
     } else {
-        echo sprintf("<p>Successfully approved %u requests and rejected %u requests.</p>", $reqResult["approved"], $reqResult["rejected"]);
+        echo "<p>";
+        echo sprintf("Successfully approved %u requests and rejected %u requests.", $reqResult["approved"], $reqResult["rejected"]);
+        if (count($reqResult["errors"]) !== 0) {
+            echo "<br>However, the following errors were encountered while processing requests:<br>";
+            foreach ($reqResult["errors"] as $error) {
+                echo htmlspecialchars($error) . "<br>";
+            }
+        }
+        echo "</p>";
     }
 }
 echo "</div>";

@@ -5,6 +5,13 @@ if ($_SERVER["SCRIPT_FILENAME"] == "common.php") {
     die();
 }
 
+# Permissions (INVERTED bit mask)
+$perm = array(
+    "manage-admins" => 1,
+    "manage-users" => 2,
+    "manage-requests" => 4
+);
+
 # Does what it says
 function print_fatal_error($error) {
     $errorTemplate =

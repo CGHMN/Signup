@@ -28,15 +28,18 @@ This table stores pending requests from users:
  * Whether they have sysadmin experience
  * Their preferred contact method
  * Their contact details
+ * The status of their request (Pending, Approved, Rejected)
+  * Stored as an integer (0 = Pending, 1 = Approved, 2 = Rejected)
  * The request IDs
 Here are the columns:
  * ID:bigint (Primary Key) (Auto-increment)
- * Username:varchar(64) (Unique Index)
- * Email:text (Unique)
+ * Status:int (Index)
+ * Username:varchar(64) (Index)
+ * Email:text
  * Pubkey:text
  * Plan:text
- * Hosting:bool
- * Experience:bool
+ * Hosting:bool (Nullable)
+ * Experience:bool (Nullable)
  * Contact:text
  * Contact_Details:text
 

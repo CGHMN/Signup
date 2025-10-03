@@ -28,13 +28,13 @@ function verify_login() {
         if ($sqlconn->connect_error) {
             return "something went wrong.";
         }
-        $stmt = $sqlconn->prepare("SELECT * FROM $dbName.Admins WHERE username = ?");
+        $stmt = $sqlconn->prepare("SELECT ID, Password, Permissions FROM $dbName.Admins WHERE username = ?");
         $stmt->bind_param("s", $_POST["username"]);
         if (!$stmt->execute()) {
             $sqlconn->close();
             return "something went wrong.";
         }
-        $stmt->bind_result($id, $uName, $passHash, $permissions, $misc);
+        $stmt->bind_result($id, $passHash, $permissions);
         if (!$stmt->fetch()) {
             $sqlconn->close();
             return "incorrect username or password.";
@@ -42,7 +42,7 @@ function verify_login() {
         $stmt->close();
         if (password_verify($_POST["password"], $passHash)) {
             $_SESSION["userId"] = $id;
-            $_SESSION["userName"] = $uName;
+            $_SESSION["userName"] = $_POST["username"];
             $_SESSION["permissions"] = $permissions;
             # Recheck username & permissions every 5 minutes.
             $_SESSION["expires"] = time() + 300;

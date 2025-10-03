@@ -9,7 +9,7 @@ if ($_SERVER["SCRIPT_FILENAME"] == "config.php") {
 $restrictedPassword = "<password>";
 
 # Password for the unrestricted SQL user, adminbot (used for admin tasks)
-$unrestrictedPassword = "<password>"";
+$unrestrictedPassword = "<password>";
 
 # Hostname/IP Address of the MySQL DB to connect to.
 $dbAddr = "<database address>";

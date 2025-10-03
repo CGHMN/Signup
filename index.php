@@ -25,13 +25,21 @@ if ($_POST) {
     $error = validate();
     if (!$error && $_POST) {
         # Store the form data in the session for the verify page.
+        $hosting = null;
+        $experience = null;
+        if (isset($_POST["hosting"]) && is_string($_POST["hosting"])) {
+            $hosting = ($_POST["hosting"] === "Yes") ? 1 : 0;
+        }
+        if (isset($_POST["experience"]) && is_string($_POST["experience"])) {
+            $experience = ($_POST["experience"] === "Yes") ? 1 : 0;
+        }
         $_SESSION["formdata"] = array(
             "username" => $_POST["username"],
             "email" => $_POST["email"],
             "pubkey" => $_POST["pubkey"],
             "plan" => (isset($_POST["plan"]) && is_string($_POST["plan"])) ? $_POST["plan"] : "",
-            "hosting" => (isset($_POST["hosting"]) && is_string($_POST["hosting"])) ? $_POST["hosting"] : "",
-            "experience" => (isset($_POST["experience"]) && is_string($_POST["experience"])) ? $_POST["experience"] : "",
+            "hosting" => $hosting,
+            "experience" => $experience,
             "contact" => (isset($_POST["contact"]) && is_string($_POST["contact"])) ? $_POST["contact"] : "",
             "contact-details" => (isset($_POST["contact-details"]) && is_string($_POST["contact-details"])) ? $_POST["contact-details"] : ""
         );

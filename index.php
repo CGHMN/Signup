@@ -11,7 +11,7 @@ function validate() {
     }
     if (!isset($_POST["email"]) || !is_string($_POST["username"]) ||
         $_POST["email"] === "" || strlen($_POST["email"]) > 65535 ||
-        !preg_match("/^\w+@[a-z][a-z0-9\-]+[a-z0-9]\.[a-z][a-z0-9\-]+[a-z0-9]+$/i", $_POST["email"])) {
+        !preg_match("/^([a-z0-9!-'*+\-\/=?\^_`{-}][a-z0-9!-'*+\-\/=?\^_`{-}\.]*)?[a-z0-9!-'*+\-\/=?\^_`{-}]@([a-z][a-z0-9\-]*)?[a-z0-9](\.([a-z][a-z0-9\-]*)?[a-z0-9])+$/i", $_POST["email"])) {
         return "you must enter a valid email address.";
     }
     if (!isset($_POST["pubkey"]) || !is_string($_POST["pubkey"]) ||

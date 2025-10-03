@@ -48,7 +48,7 @@ function verify_and_add() {
         }
         $passwordHash = password_hash($_POST["password-1"], PASSWORD_DEFAULT);
         $misc = "{}";
-        $stmt = $sqlconn->prepare("REPLACE INTO $dbName.Admins (Username, Password, Permissions, Misc) VALUES (?, ?, ?, ?)");
+        $stmt = $sqlconn->prepare("REPLACE INTO $dbName.Admins (Username, Password, Permissions) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssis", $_POST["username"], $passwordHash, $perms, $misc);
         try {
             if ($stmt->execute()) {

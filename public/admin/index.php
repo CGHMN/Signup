@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config.php';
+require __DIR__.'/../../config.php';
 # If user has already authenticated, redirect them to the admin console.
 if (isset($_SESSION["userId"]) && is_numeric($_SESSION["userId"]) &&
     isset($_SESSION["userName"]) && is_string($_SESSION["userName"]) &&

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'config.php';
+require __DIR__.'/../config.php';
 function verify_and_submit() {
     # Check that the server state & email verification code are valid.
     global $restrictedPassword;

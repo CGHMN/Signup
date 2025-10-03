@@ -105,7 +105,7 @@ function draw_requests_table() {
 }
 
 function process_requests() {
-    global $restrictedPassword;
+    global $unrestrictedPassword;
     global $dbAddr;
     global $dbName;
     global $router;
@@ -117,7 +117,7 @@ function process_requests() {
         return null;
     }
 
-    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
     if ($sqlconn->connect_error) {
         return "failed to connect to the database.";
     }

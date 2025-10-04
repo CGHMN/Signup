@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config.php';
+require __DIR__.'/../../config.php';
 require 'common.php';
 
 if (!check_auth()) {
@@ -194,11 +194,11 @@ if ($_POST && isset($_SESSION["Users"]) && is_array($_SESSION["Users"])) {
 # Header
 print_header("CGHMN Admin Page");
 
-# Print the list of requests
+# Print the list of users
 echo "<div>";
-draw_requests_table();
+draw_users_table();
 
-# Print the outcome of processing the requests.
+# Print the outcome of processing the actions.
 if (isset($reqResult)) {
     if ($reqResult == null) {
         echo "<p>Something went wrong handling requests.</p>";

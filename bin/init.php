@@ -98,7 +98,7 @@ require_once("{$root_dir}/config.php");
 // Create database connection
 $db = null;
 try {
-	$db = new mysqli($dbAddr, "adminbot", $restrictedPassword, $dbName);
+	$db = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
 } catch (Exception $ex) {
 	error_out("Unable to open database connection: {$ex->getMessage()}");
 }

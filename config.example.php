@@ -1,25 +1,20 @@
 <?php
-# Don't access config.php directly.
-if ($_SERVER["SCRIPT_FILENAME"] == "config.php") {
-    http_response_code(403);
-    die();
-}
+// Example project configuration file
 
 # Password for the restricted SQL user, submitbot (used for account requests)
-$restrictedPassword = "<password>";
+$restrictedPassword = "changeme";
 
 # Password for the unrestricted SQL user, adminbot (used for admin tasks)
-$unrestrictedPassword = "<password>";
+$unrestrictedPassword = "changeme";
 
 # Hostname/IP Address of the MySQL DB to connect to.
-$dbAddr = "<database address>";
+$dbAddr = "127.0.0.1";
 
 # Name of the database to use.
-$dbName = "<database name>";
+$dbName = "cghmn_signups";
 
 # URL of the router API
 $router = "<router>";
 
 # Router API key
 $rtrAPIKey = "<router API key>";
-?>

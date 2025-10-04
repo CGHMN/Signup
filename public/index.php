@@ -1,6 +1,6 @@
 <?php 
 session_start();
-require 'config.php';
+require __DIR__ . '/../config.php';
 function validate() {
     # Validate the form data.
     if (!isset($_POST["username"]) || !is_string($_POST["username"]) ||  $_POST["username"] === "") {

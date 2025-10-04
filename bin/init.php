@@ -11,13 +11,15 @@ $root_dir = realpath(__DIR__ . "/..");
  */
 function usage(): void {
 	echo <<<USAGE
-	{$_SERVER['SCRIPT_FILENAME']} [-h|--help]
+	{$_SERVER['SCRIPT_FILENAME']} [-h|--help] [-s|--seed] [-p <password>|--admin-password <password>]
 
 	Initializes the Sign-Up project for the CGHMN.
 	Can be run multiple times to upgrade the database on any changes.
 
 	Arguments:
-	    -h|--help    Show this help
+	    -h|--help        Show this help
+		-s|--seed        Run seeders
+		-p|--password    Sets the initial admin password, implies -s
 	
 	USAGE;
 }
@@ -51,11 +53,23 @@ function error_out(string $message) {
 	out($message, true);
 }
 
+// Default command line options
+$run_seeders = false;
+$initial_admin_password = null;
 
 // Parse script command line arguments
-$script_options = getopt('h', [ 'help' ]);
+$script_options = getopt('hsp:', [ 'help', 'seed', 'password:' ]);
 foreach($script_options as $option => $value) {
 	switch($option) {
+		case "s":
+		case "seed":
+			$run_seeders = true;
+			break;
+		case "p":
+		case "password":
+			$initial_admin_password = $value;
+			$run_seeders = true;
+			break;
 		case "h":
 		case "help":
 			usage();
@@ -90,7 +104,6 @@ try {
 }
 
 // Run database migrations
-
 if (is_dir("{$root_dir}/migrations")) {
 	out("Running database migrations ...");
 	
@@ -150,8 +163,44 @@ if (is_dir("{$root_dir}/migrations")) {
 			exit(1);
 		}
 
-		echo "OK." . PHP_EOL;
+		echo "OK.".PHP_EOL;
 	}
+
+	out('');
+}
+
+// Run database seeds
+if (is_dir("{$root_dir}/seeders") && $run_seeders) {
+	out("Running database seeds ...");
+
+	// Load all seed scripts, sort them and call seed() on each
+	$php_scripts = glob("{$root_dir}/seeders/*.php");
+	natsort($php_scripts);
+
+	foreach ($php_scripts as $file) {
+		$seed_full_name = basename($file, '.php');
+		out("    {$seed_full_name} ... ", newline: false);
+
+		$seeder = require_once($file);
+
+		if (! is_object($seeder) || ! method_exists($seeder, 'seed')) {
+			echo "Skipped, no seed method.".PHP_EOL;
+			continue;
+		}
+
+		try {
+			$seeder->seed($db);
+		} catch (Exception $ex) {
+			echo "Failed.".PHP_EOL;
+			error_out("Failed to run database seeder: ");
+			error_out("    {$ex->getMessage()}");
+			exit(1);
+		}
+
+		echo "OK.".PHP_EOL;
+	}
+
+	out('');
 }
 
 out("Done!");

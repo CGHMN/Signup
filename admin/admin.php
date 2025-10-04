@@ -50,7 +50,7 @@ function draw_requests_table() {
     </tr>";
 
     # Print all the requests
-    while (($row = $result->fetch_assoc()) !== null) {
+    while ($row = $result->fetch_assoc()) {
         # Convert the boolean hosting & experience fields to strings.
         $hosting = "N/A";
         $expr = "N/A";

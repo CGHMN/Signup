@@ -14,7 +14,7 @@ return new class {
 				TunnelIP TEXT NOT NULL,
 				AllowedIPs TEXT NOT NULL,
 				Pubkey TEXT NOT NULL,
-				PSK TEXT DEFAULT "",
+				PSK VARCHAR(44) DEFAULT "",
 
 				PRIMARY KEY (ID),
 				FOREIGN KEY (UserID) REFERENCES Users(ID),

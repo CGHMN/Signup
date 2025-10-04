@@ -33,9 +33,9 @@ function draw_requests_table() {
     $_SESSION["Requests"] = array();
 
     # Start the table.
-    echo sprintf(
+    echo
     "<h3 class=\"form-header\">Pending requests</h3>
-    <form action=\"%s\" method=\"post\">
+    <form action=\"", htmlspecialchars($_SERVER["PHP_SELF"]), "\" method=\"post\">
     <table class=\"data-table\">
     <tbody>
     <tr>
@@ -47,10 +47,11 @@ function draw_requests_table() {
     <th>Preferred Contact Method</th>
     <th>Contact Details</th>
     <th>Decision</th>
-    </tr>", htmlspecialchars($_SERVER["PHP_SELF"]));
+    </tr>";
 
     # Print all the requests
     while (($row = $result->fetch_assoc()) !== null) {
+        # Convert the boolean hosting & experience fields to strings.
         $hosting = "N/A";
         $expr = "N/A";
         if (!is_null($row["Hosting"])) {
@@ -59,31 +60,34 @@ function draw_requests_table() {
         if (!is_null($row["Experience"])) {
             $expr = ($row["Experience"]) ? "Yes" : "No";
         }
-        echo sprintf(
-            "<tr>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>%s</td>
-            <td>
-            <select id=\"decision-%u\" name=\"decision-%u\">
-            <option value=\"none\">Do Nothing</option>
-            <option value=\"approve\">Approve</option>
-            <option value=\"reject\">Reject</option>
-            </select>
-            </td>",
-            htmlspecialchars($row["Username"]),
-            htmlspecialchars($row["Email"]),
-            htmlspecialchars($row["Plan"]),
-            htmlspecialchars($hosting),
-            htmlspecialchars($expr),
-            htmlspecialchars($row["Contact"]),
-            htmlspecialchars($row["Contact_Details"]),
-            $row["ID"], $row["ID"]
-        );
+
+        # If the plan or contact details are ridiculously long, shorten them.
+        $plan = $row["Plan"];
+        $contactDetails = $row["Contact_Details"];
+
+        if (strlen($plan) > 1000) {
+            $plan = substr($plan, 0, 997) . "...";
+        }
+        if (strlen($contactDetails) > 1000) {
+            $contactDetails = substr($contactDetails, 0, 997) . "...";
+        }
+
+        echo 
+       "<tr>
+        <td>", htmlspecialchars($row["Username"]), "</td>
+        <td>", htmlspecialchars($row["Email"]), "</td>
+        <td>", htmlspecialchars($plan), "</td>
+        <td>", htmlspecialchars($hosting), "</td>
+        <td>", htmlspecialchars($expr), "</td>
+        <td>", htmlspecialchars($row["Contact"]), "</td>
+        <td>", htmlspecialchars($contactDetails), "</td>
+        <td>
+        <select id=\"decision-", $row["ID"], "\" name=\"decision-", $row["ID"], "\">
+        <option value=\"none\">Do Nothing</option>
+        <option value=\"approve\">Approve</option>
+        <option value=\"reject\">Reject</option>
+        </select>
+        </td>";
 
         # Add the request to the list.
         $_SESSION["Requests"][$row["ID"]] = $row;
@@ -136,11 +140,30 @@ function process_requests() {
     curl_setopt($chGet, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
 
     foreach ($_SESSION["Requests"] as $id => $req) {
-        $name = sprintf("decision-%u", $id);
+        $name = "decision-$id";
         if (isset($_POST[$name]) && is_string($_POST[$name])) {
             $decision = $_POST[$name];
             switch ($decision) {
                 case "approve":
+                    # Add the user to the DB.
+                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email) VALUES (?, ?)");
+                    $stmt->bind_params("ss", $req["Username"], $req["Email"]);
+                    try {
+                        if (!$stmt->execute()) {
+                            array_push($retVal["errors"], "Failed to add user to the database.");
+                            break;
+                        }
+                    } catch (Exception $e) {
+                        $errno = $sqlconn->errno;
+                        if ($errno === 1169) {
+                            array_push($retVal["errors"], "User already in database.");
+                            break;
+                        }
+                        array_push($retVal["errors"], "Something went wrong adding user to the database.");
+                        break;
+                    }
+                    $stmt->close();
+
                     # API code goes here.
                     $apiReq = array(
                         "name" => "Tunnel for Member " . $req["Username"],
@@ -167,6 +190,22 @@ function process_requests() {
                         array_push($retVal["errors"], "The router encountered an unknown error.");
                         break;
                     }
+
+                    # Add the user's WG peer to the DB.
+                    $allowedIPs = json_encode($decodedRes["allowed_ips"]);
+                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.WG_Peers (UserID, TunnelIP, AllowedIPs, Pubkey, PSK) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->bind_params("issss", $sqlconn->insert_id, $decodedRes["tunnel_ip"], $allowedIPs, $decodedRes["public_key"], $decodedRes["preshared_key"]);
+                    try {
+                        if (!$stmt->execute()) {
+                            array_push($retVal["errors"], "Failed to add user's WG peer to the database.");
+                            break;
+                        }
+                    } catch (Exception $e) {
+                        array_push($retVal["errors"], "Something went wrong adding user to the database.");
+                        break;
+                    }
+                    $stmt->close();
+
                     # Get the example config
                     curl_setopt($chGet, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$decodedRes["id"]}/config");
                     $response = curl_exec($chGet);
@@ -174,7 +213,7 @@ function process_requests() {
                         array_push($retVal["errors"], "The router didn't respond to the API request.");
                         break;
                     }
-                    # Add the user to the DB here
+
                     if (mail($req["Email"], "Welcome to CGHMN!", 
                         "Dear {$req["Username"]},\r\n" .
                         "Welcome to CGHMN!\r\n" .
@@ -231,7 +270,7 @@ if (isset($reqResult)) {
         echo "<p>Sorry, $reqResult Please try again later</p>";
     } else {
         echo "<p>";
-        echo sprintf("Successfully approved %u requests and rejected %u requests.", $reqResult["approved"], $reqResult["rejected"]);
+        echo "Successfully approved ", $reqResult["approved"], " requests and rejected ", $reqResult["rejected"], " requests.";
         if (count($reqResult["errors"]) !== 0) {
             echo "<br>However, the following errors were encountered while processing requests:<br>";
             foreach ($reqResult["errors"] as $error) {

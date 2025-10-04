@@ -1,5 +1,5 @@
 For storing data, we rely on an external MySQL (or compatible) database.
-There are 3 tables: Admins, Requests, and Users.
+There are 4 tables: Admins, Requests, Users, and WG_Peers.
 Because none of these are created automatically at the moment,
 it's important that you create these manually.
 To help with that, we'll document each table, it's purpose, and it's columns here.
@@ -48,14 +48,24 @@ This table stores all the users whose requests have been approved
 and who are now members of CGHMN:
  * Their usernames
  * Their email addresses
- * Their peers on the Wireguard server, stored as JSON objects containing the following:
-    * Their peer ID
-    * Their tunnel IP
-    * Their routed subnet(s)
-    * Their Wireguard pubkeys
  * Their user IDs
 Here are the columns:
  * ID:bigint (Primary Key) (Auto-increment)
  * Username:varchar(64) (Unique Index)
  * Email:text (Unique)
- * Peers:text
+
+*** WG_Peers ***
+This table stores the Wireguard info for all users
+ * Which user the WG peer belongs to
+ * Their tunnel IP
+ * Their routed subnets
+ * Their pubkey
+ * Their preshared key
+ * The peer ID
+Here are the columns:
+ * ID:bigint (Primary Key)
+ * UserID:bigint (Foreign Key on Users[ID])
+ * TunnelIP:text
+ * AllowedIPs:text
+ * Pubkey:text
+ * PSK:text

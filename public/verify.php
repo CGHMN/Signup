@@ -62,9 +62,9 @@ function verify_and_submit() {
             die();
         }
     } catch(Exception $e) {
-        $sqlconn->close();
-        return "something went wrong while submitting your request.";
     }
+    $sqlconn->close();
+    return "something went wrong while submitting your request.";
 }
 if ($_POST) {
     $error = verify_and_submit();
@@ -84,7 +84,7 @@ if ($_POST) {
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post">
             <label for="code">Please enter your verification code.<br>If you don't see an email from us, check your spam folder.</label><br>
             <input type="text" id="code" name="code">
-            <input type="submit">
+            <input type="submit" value="Verify">
         </form>
     </body>
 </html>

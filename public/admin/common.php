@@ -24,7 +24,7 @@ function print_fatal_error($error) {
             <p>Sorry, %s Please try again later.</p>
         </body>
     </html>";
-    echo sprintf($errorTemplate, $error);
+    printf($errorTemplate, $error);
     die();
 }
 

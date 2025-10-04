@@ -90,6 +90,7 @@ try {
 }
 
 // Run database migrations
+
 if (is_dir("{$root_dir}/migrations")) {
 	out("Running database migrations ...");
 	
@@ -139,8 +140,15 @@ if (is_dir("{$root_dir}/migrations")) {
 			continue;
 		}
 
-		$migration->up($db);
-		file_put_contents("{$root_dir}/.db_last_migration", $migration_timestamp);
+		try {
+			$migration->up($db);
+			file_put_contents("{$root_dir}/.db_last_migration", $migration_timestamp);
+		} catch (Exception $ex) {
+			echo "Failed.".PHP_EOL;
+			error_out("Failed to run database migration: ");
+			error_out("    {$ex->getMessage()}");
+			exit(1);
+		}
 
 		echo "OK." . PHP_EOL;
 	}

@@ -18,18 +18,33 @@ function verify_and_submit() {
         return "something went wrong.";
     }
 
-    # JSON code any other data we want to save for storage in the DB.
-    $misc = json_encode(array(
-        "plan" => $_SESSION["formdata"]["plan"],
-        "hosting" => $_SESSION["formdata"]["hosting"],
-        "experience" => $_SESSION["formdata"]["experience"],
-        "contact" => $_SESSION["formdata"]["contact"],
-        "contact-details" => $_SESSION["formdata"]["contact-details"]
-    ));
+    # Check if the user has already submitted a request.
+    $stmt = $sqlconn->prepare("SELECT ID FROM $dbName.Requests WHERE Username = ? AND (Status = 0 OR Status = 1)");
+    $stmt->bind_param("s", $_SESSION["formdata"]["username"]);
+    if (!$stmt->execute()) {
+        $sqlconn->close();
+        return "something went wrong while connecting to the database.";
+    }
+    # If they have already submitted a request that is pending or has been approved,
+    # prevent them from submitting another.
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        $stmt->close();
+        $sqlconn->close();
+        return "you have already submitted a request.";
+    }
 
     # Store request to the DB.
-    $stmt = $sqlconn->prepare("INSERT IGNORE INTO $dbName.Requests (Username, Email, Pubkey, Misc) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $_SESSION["formdata"]["username"], $_SESSION["formdata"]["email"], $_SESSION["formdata"]["pubkey"], $misc);
+    $status = 0;
+    $stmt = $sqlconn->prepare(
+        "INSERT INTO $dbName.Requests 
+        (Status, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssiiss", 
+        $status, $_SESSION["formdata"]["username"], $_SESSION["formdata"]["email"], $_SESSION["formdata"]["pubkey"], 
+        $_SESSION["formdata"]["plan"], $_SESSION["formdata"]["hosting"], $_SESSION["formdata"]["experience"],
+        $_SESSION["formdata"]["contact"], $_SESSION["formdata"]["contact-details"]
+    );
     try {
         if ($stmt->execute()) {
             echo 

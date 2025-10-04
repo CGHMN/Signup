@@ -19,8 +19,11 @@ function draw_requests_table() {
         return;
     }
 
-    # Retrieve the list of requests.
-    $result = $sqlconn->query("SELECT * FROM $dbName.Requests", MYSQLI_USE_RESULT);
+    # Retrieve the list of pending requests.
+    $result = $sqlconn->query(
+        "SELECT ID, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details 
+        FROM $dbName.Requests
+        WHERE Status = 0", MYSQLI_USE_RESULT);
     if (!$result) {
         echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
         return;
@@ -48,28 +51,13 @@ function draw_requests_table() {
 
     # Print all the requests
     while (($row = $result->fetch_assoc()) !== null) {
-        $misc = json_decode($row["Misc"], true);
-        $plan = "N/A";
         $hosting = "N/A";
         $expr = "N/A";
-        $contact = "N/A";
-        $contactDetails = "N/A";
-        if ($misc) {
-            if (isset($misc["plan"]) && is_string($misc["plan"])) {
-                $plan = $misc["plan"];
-            }
-            if (isset($misc["hosting"]) && is_string($misc["hosting"])) {
-                $hosting = $misc["hosting"];
-            }
-            if (isset($misc["experience"]) && is_string($misc["experience"])) {
-                $expr = $misc["experience"];
-            }
-            if (isset($misc["contact"]) && is_string($misc["contact"])) {
-                $contact = $misc["contact"];
-            }
-            if (isset($misc["contact-details"]) && is_string($misc["contact-details"])) {
-                $contactDetails = $misc["contact-details"];
-            }
+        if (!is_null($row["Hosting"])) {
+            $hosting = ($row["Hosting"]) ? "Yes" : "No";
+        }
+        if (!is_null($row["Experience"])) {
+            $expr = ($row["Experience"]) ? "Yes" : "No";
         }
         echo sprintf(
             "<tr>
@@ -89,11 +77,11 @@ function draw_requests_table() {
             </td>",
             htmlspecialchars($row["Username"]),
             htmlspecialchars($row["Email"]),
-            htmlspecialchars($plan),
+            htmlspecialchars($row["Plan"]),
             htmlspecialchars($hosting),
             htmlspecialchars($expr),
-            htmlspecialchars($contact),
-            htmlspecialchars($contactDetails),
+            htmlspecialchars($row["Contact"]),
+            htmlspecialchars($row["Contact_Details"]),
             $row["ID"], $row["ID"]
         );
 
@@ -117,7 +105,7 @@ function draw_requests_table() {
 }
 
 function process_requests() {
-    global $restrictedPassword;
+    global $unrestrictedPassword;
     global $dbAddr;
     global $dbName;
     global $router;
@@ -129,7 +117,7 @@ function process_requests() {
         return null;
     }
 
-    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
     if ($sqlconn->connect_error) {
         return "failed to connect to the database.";
     }
@@ -186,6 +174,7 @@ function process_requests() {
                         array_push($retVal["errors"], "The router didn't respond to the API request.");
                         break;
                     }
+                    # Add the user to the DB here
                     if (mail($req["Email"], "Welcome to CGHMN!", 
                         "Dear {$req["Username"]},\r\n" .
                         "Welcome to CGHMN!\r\n" .
@@ -194,7 +183,7 @@ function process_requests() {
                         "And your routed subnet is {$decodedRes["allowed_ips"][0]}.\r\n" .
                         "Here's an example config you can use:\r\n" .
                         $response)) {
-                        $stmt = $sqlconn->prepare("DELETE FROM $dbName.Requests WHERE ID = ?");
+                        $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");
                         $stmt->bind_param("i", $req["ID"]);
                         if ($stmt->execute()) {
                             $retVal["approved"]++;
@@ -203,7 +192,7 @@ function process_requests() {
                     }
                     break;
                 case "reject":
-                    $stmt = $sqlconn->prepare("DELETE FROM $dbName.Requests WHERE ID = ?");
+                    $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 2 WHERE ID = ?");
                     $stmt->bind_param("i", $req["ID"]);
                     if ($stmt->execute()) {
                         $retVal["rejected"]++;

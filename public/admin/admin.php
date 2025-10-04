@@ -219,7 +219,7 @@ function process_requests() {
                         "Your tunnel IP is {$decodedRes["tunnel_ip"]},\r\n" .
                         "Your WireGuard Preshared Key is {$decodedRes["preshared_key"]},\r\n" . 
                         "And your routed subnet is {$decodedRes["allowed_ips"][0]["cidr"]}.\r\n" .
-                        "Here's an example config you can use:\r\n" .
+                        "Here's an example config you can use:\r\n---\r\n" .
                         $response)) {
                         $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");
                         $stmt->bind_param("i", $req["ID"]);

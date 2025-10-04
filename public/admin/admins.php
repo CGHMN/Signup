@@ -87,7 +87,7 @@ if (isset($_SESSION["lastAction"])) {
 <br>
 
 <!-- Create the password change form -->
-"<h3 class="form-header">Change your password</h3>
+<h3 class="form-header">Change your password</h3>
 <form action="newpass.php" method="post" style="margin-left: 10px;">
 <table>
 <tbody>

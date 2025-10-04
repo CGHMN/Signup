@@ -100,7 +100,7 @@ function draw_requests_table() {
     if ($result->num_rows === 0) {
         echo "<p class=\"data-table-footer\">No requests were found! :D</p>";
     } else {
-        echo "<input class=\"data-table-footer\" type=\"submit\" value=\"Submit\">";
+        echo "<input class=\"data-table-footer\" type=\"submit\" value=\"Go!\">";
     }
 
     # Fin.
@@ -145,35 +145,14 @@ function process_requests() {
             $decision = $_POST[$name];
             switch ($decision) {
                 case "approve":
-                    # Add the user to the DB.
-                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
-                    $stmt->bind_params("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
-                    try {
-                        if (!$stmt->execute()) {
-                            array_push($retVal["errors"], "Failed to add user to the database.");
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        $errno = $sqlconn->errno;
-                        if ($errno === 1169) {
-                            array_push($retVal["errors"], "User already in database.");
-                            break;
-                        }
-                        array_push($retVal["errors"], "Something went wrong adding user to the database.");
-                        break;
-                    }
-                    $stmt->close();
-
-                    # API code goes here.
+                    # Build cURL request
                     $apiReq = array(
                         "name" => "Tunnel for Member " . $req["Username"],
                         "public_key" => $req["Pubkey"]
                     );
-
-                    # Build cURL request
                     curl_setopt($chPost, CURLOPT_POSTFIELDS, http_build_query($apiReq));
 
-                    # Execute the request.
+                    # Create the WG peer for the new user.
                     $response = curl_exec($chPost);
                     if (!$response || !is_string($response)) {
                         array_push($retVal["errors"], "The router didn't respond to the API request.");
@@ -181,7 +160,7 @@ function process_requests() {
                     }
                     # Decode the JSON response and check for errors.
                     $decodedRes = json_decode($response, true);
-                    if ($decodedRes["message"]) {
+                    if (isset($decodedRes["message"]) && is_string($decodedRes["message"])) {
                         array_push($retVal["errors"], "The router encountered an error: \"{$decodedRes["message"]}\".");
                         break;
                     }
@@ -191,17 +170,37 @@ function process_requests() {
                         break;
                     }
 
+                    # Add the user to the DB.
+                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
+                    $stmt->bind_param("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
+                    try {
+                        if (!$stmt->execute()) {
+                            array_push($retVal["errors"], "Failed to add user to the database.");
+                            break;
+                        }
+                    } catch (Exception $e) {
+                        $errno = $sqlconn->errno;
+                        if ($errno === 1169 || $errno === 1062) {
+                            array_push($retVal["errors"], "User already in database.");
+                            break;
+                        }
+                        array_push($retVal["errors"], "Something went wrong adding user to the database: \"{$sqlconn->error}\".");
+                        break;
+                    }
+                    $userID = $stmt->insert_id;
+                    $stmt->close();
+
                     # Add the user's WG peer to the DB.
                     $allowedIPs = json_encode($decodedRes["allowed_ips"]);
-                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.WG_Peers (UserID, TunnelIP, AllowedIPs, Pubkey, PSK) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->bind_params("issss", $sqlconn->insert_id, $decodedRes["tunnel_ip"], $allowedIPs, $decodedRes["public_key"], $decodedRes["preshared_key"]);
+                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.WG_Peers (ID, UserID, TunnelIP, AllowedIPs, Pubkey, PSK) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("isssss", $decodedRes["id"], $userID, $decodedRes["tunnel_ip"], $allowedIPs, $decodedRes["public_key"], $decodedRes["preshared_key"]);
                     try {
                         if (!$stmt->execute()) {
                             array_push($retVal["errors"], "Failed to add user's WG peer to the database.");
                             break;
                         }
                     } catch (Exception $e) {
-                        array_push($retVal["errors"], "Something went wrong adding user to the database.");
+                        array_push($retVal["errors"], "Something went wrong adding user's WG peer to the database: \"{$sqlconn->error}\".");
                         break;
                     }
                     $stmt->close();
@@ -219,7 +218,7 @@ function process_requests() {
                         "Welcome to CGHMN!\r\n" .
                         "Your tunnel IP is {$decodedRes["tunnel_ip"]},\r\n" .
                         "Your WireGuard Preshared Key is {$decodedRes["preshared_key"]},\r\n" . 
-                        "And your routed subnet is {$decodedRes["allowed_ips"][0]}.\r\n" .
+                        "And your routed subnet is {$decodedRes["allowed_ips"][0]["cidr"]}.\r\n" .
                         "Here's an example config you can use:\r\n" .
                         $response)) {
                         $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");

@@ -84,7 +84,7 @@ require_once("{$root_dir}/config.php");
 // Create database connection
 $db = null;
 try {
-	$db = new mysqli($dbAddr, "adminbot", $restrictedPassword);
+	$db = new mysqli($dbAddr, "adminbot", $restrictedPassword, $dbName);
 } catch (Exception $ex) {
 	error_out("Unable to open database connection: {$ex->getMessage()}");
 }
@@ -125,7 +125,7 @@ if (is_dir("{$root_dir}/migrations")) {
 			intval($name_parts[1]),
 		);
 
-		out("    {$migration_full_name} ($migration_timestamp) ... ", newline: false);
+		out("    {$migration_full_name} ... ", newline: false);
 
 		if ($migration_timestamp <= $last_run_migration) {
 			echo "Skipped." . PHP_EOL;

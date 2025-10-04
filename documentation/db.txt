@@ -56,3 +56,17 @@ Here are the columns:
  * Username:varchar(64) (Unique Index)
  * Email:text (Unique)
  * Peers:text
+
+*** WG_Peers ***
+This table stores the Wireguard info for all users
+ * Which user the WG peer belongs to
+ * Their tunnel IP
+ * Their routed subnets
+ * Their pubkey
+ * The peer ID
+Here are the columns:
+ * ID:bigint (Primary Key)
+ * UserID:bigint (Foreign Key on Users[ID])
+ * TunnelIP:text
+ * AllowedIPs:text
+ * Pubkey:text

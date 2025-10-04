@@ -14,9 +14,11 @@ return new class {
 				TunnelIP TEXT NOT NULL,
 				AllowedIPs TEXT NOT NULL,
 				Pubkey TEXT NOT NULL,
+				PSK TEXT DEFAULT "",
 
 				PRIMARY KEY (ID),
-				FOREIGN KEY (UserID) REFERENCES Users(ID)
+				FOREIGN KEY (UserID) REFERENCES Users(ID),
+				INDEX idx_userid (UserID)
 			);
 		SQL);
 	}

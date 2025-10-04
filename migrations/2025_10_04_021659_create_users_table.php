@@ -15,7 +15,8 @@ return new class {
 
 				PRIMARY KEY (ID),
 				UNIQUE (Username),
-				UNIQUE (Email)
+				UNIQUE (Email),
+				INDEX idx_username (Username)
 			);
 		SQL);
 	}

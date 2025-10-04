@@ -15,7 +15,8 @@ return new class {
 				Permission INT NOT NULL,
 
 				PRIMARY KEY (ID),
-				UNIQUE (Username)
+				UNIQUE (Username),
+				INDEX idx_username (Username)
 			);
 		SQL);
 	}

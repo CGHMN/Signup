@@ -10,6 +10,7 @@ return new class {
 		$db->query(<<<SQL
 			CREATE TABLE Requests (
 				ID BIGINT NOT NULL AUTO_INCREMENT,
+				Status INT NOT NULL,
 				Username VARCHAR (64) NOT NULL,
 				Email VARCHAR (254) NOT NULL,
 				Pubkey TEXT NOT NULL,
@@ -21,7 +22,9 @@ return new class {
 
 				PRIMARY KEY (ID),
 				UNIQUE (Username),
-				UNIQUE (Email)
+				UNIQUE (Email),
+				INDEX idx_username (Username),
+				INDEX idx_status (Status)
 			);
 		SQL);
 	}

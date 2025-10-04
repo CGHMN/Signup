@@ -35,7 +35,7 @@ return new class {
 	 * @param mysqli $db MySQLi Database connection
 	 */
 	public function up(mysqli $db): void {
-
+		
 	}
 
 	/**
@@ -44,7 +44,7 @@ return new class {
 	 * @param mysqli $db MySQLi Database connection
 	 */
 	public function down(mysqli $db): void {
-		// Apply changes to database with $db on downgrade here
+
 	}
 };
 EOF

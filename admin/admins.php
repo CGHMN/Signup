@@ -25,7 +25,7 @@ if (isset($_SESSION["lastAction"])) {
         if ($_SESSION["lastAction"]["ret"] === null) {
             echo "<p>Sorry, something went wrong. Please try again.</p>";
         } else if (is_string($_SESSION["lastAction"]["ret"])) {
-            echo "<p>Sorry, {$_SESSION["lastAction"]["ret"]} Please try again.</p>";
+            echo "<p>Sorry, ", $_SESSION["lastAction"]["ret"], " Please try again.</p>";
         } else {
             echo "<p>Password changed successfully.</p>";
         }

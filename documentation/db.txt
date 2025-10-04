@@ -48,11 +48,15 @@ This table stores all the users whose requests have been approved
 and who are now members of CGHMN:
  * Their usernames
  * Their email addresses
+ * Their preferred contact method
+ * Their contact details
  * Their user IDs
 Here are the columns:
  * ID:bigint (Primary Key) (Auto-increment)
  * Username:varchar(64) (Unique Index)
  * Email:text (Unique)
+ * Contact:text
+ * Contact_Details:text
 
 *** WG_Peers ***
 This table stores the Wireguard info for all users

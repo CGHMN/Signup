@@ -146,8 +146,8 @@ function process_requests() {
             switch ($decision) {
                 case "approve":
                     # Add the user to the DB.
-                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email) VALUES (?, ?)");
-                    $stmt->bind_params("ss", $req["Username"], $req["Email"]);
+                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
+                    $stmt->bind_params("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
                     try {
                         if (!$stmt->execute()) {
                             array_push($retVal["errors"], "Failed to add user to the database.");

@@ -53,7 +53,7 @@ if ($_POST) {
             "Dear {$_POST["username"]},\r\n" .
             "Your verification code is:\r\n" . $_SESSION["verifycode"] . "\r\n" .
             "This code expires in 20 minutes.\r\n" .
-            "If you do not recognize this email, please contact loganisamazing@outlook.com.", 
+            "If you do not recognize this email, please contact basiclogan@outlook.com.", 
             "From: noreply@cghmn.org")) {
             
             # Redirect to the verification page.
@@ -65,8 +65,6 @@ if ($_POST) {
     }
 }
 ?>
-<!-- What I want is to keep the user on the form page if something went wrong,
- and otherwise redirect them to an email verification page. -->
 <!DOCTYPE html>
 <html>
     <head>
@@ -87,9 +85,12 @@ if ($_POST) {
             <label for="pubkey">What's your WireGuard public key?<span style="color:red"> *</span></label><br>
             <a href="placeholder.html">I don't have one</a><br>
             <input type="text" name="pubkey" id="pubkey" placeholder="Public Key"><br>
-            <label for="plan">What do you plan to do on CGHMN?</label><br>
+            <label for="plan">What would you like to do on CGHMN?</label><br>
             <textarea name="plan" id="plan" rows="6" cols="40"></textarea><br>
-            <p>Will you need hosting from CGHMN?</p>
+            <p>
+                Will you need server hosting from CGHMN?<br>
+                (vs running your own servers)
+            </p>
             <input type="radio" id="yes-hosting" name="hosting" value="Yes">
             <label for="yes-hosting">Yes</label><br>
             <input type="radio" id="no-hosting" name="hosting" value="No">

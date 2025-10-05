@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 // Initialization script for the Sign-up page
 

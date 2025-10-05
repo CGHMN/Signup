@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config.php';
+require __DIR__.'/../../config.php';
 require 'common.php';
 
 if (!check_auth()) {
@@ -108,6 +108,7 @@ function process_actions() {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
     curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
     foreach ($_SESSION["Users"] as $id => $usr) {
         $name = "decision-$id";
@@ -117,7 +118,7 @@ function process_actions() {
                 case "ban":
                     # Get the user's WG peers from the databse.
                     $stmt = $sqlconn->prepare("SELECT ID FROM $dbName.WG_Peers WHERE UserID = ?");
-                    $stmt->bind_params("i", $usr["ID"]);
+                    $stmt->bind_param("i", $usr["ID"]);
                     try {
                         if (!$stmt->execute()) {
                             array_push($retVal["errors"], "Failed to retrieve Wireguard peers from database.");
@@ -134,9 +135,14 @@ function process_actions() {
                     while ($row = $result->fetch_assoc()) {
                         # Delete the WG peers
                         curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$row["ID"]}");
-                        $response = curl_exec($chPost);
+                        $response = curl_exec($ch);
                         if (!$response) {
                             array_push($retVal["errors"], "The router didn't respond to the API request.");
+                            $good = false;
+                            break;
+                        }
+                        if ($response != 1) {
+                            array_push($retVal["errors"], "Something went wrong while deleting the WG peer.");
                             $good = false;
                             break;
                         }
@@ -148,7 +154,7 @@ function process_actions() {
                     }
                     # Delete the WG peers from the DB
                     $stmt = $sqlconn->prepare("DELETE FROM $dbName.WG_Peers WHERE UserID = ?");
-                    $stmt->bind_params("i", $usr["ID"]);$stmt->bind_params("i", $usr["ID"]);
+                    $stmt->bind_param("i", $usr["ID"]);$stmt->bind_param("i", $usr["ID"]);
                     try {
                         if (!$stmt->execute()) {
                             array_push($retVal["errors"], "Failed to delete Wireguard peers from database.");
@@ -161,7 +167,7 @@ function process_actions() {
                     $stmt->close();
                     # Delete them from the list of users
                     $stmt = $sqlconn->prepare("DELETE FROM $dbName.Users WHERE ID = ?");
-                    $stmt->bind_params("i", $usr["ID"]);$stmt->bind_params("i", $usr["ID"]);
+                    $stmt->bind_param("i", $usr["ID"]);$stmt->bind_param("i", $usr["ID"]);
                     try {
                         if (!$stmt->execute()) {
                             array_push($retVal["errors"], "Failed to delete user from database.");
@@ -188,17 +194,17 @@ function process_actions() {
 
 # If we recieved a list of decisions, process them.
 if ($_POST && isset($_SESSION["Users"]) && is_array($_SESSION["Users"])) {
-    $reqResult = process_requests();
+    $reqResult = process_actions();
 }
 
 # Header
-print_header("CGHMN Admin Page");
+print_header("User Management");
 
-# Print the list of requests
+# Print the list of users
 echo "<div>";
-draw_requests_table();
+draw_users_table();
 
-# Print the outcome of processing the requests.
+# Print the outcome of processing the actions.
 if (isset($reqResult)) {
     if ($reqResult == null) {
         echo "<p>Something went wrong handling requests.</p>";

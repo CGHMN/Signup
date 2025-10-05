@@ -79,7 +79,7 @@ foreach($script_options as $option => $value) {
 			error_out("Invalid argument: {$option}");
 			usage();
 			exit(1);
-	} 
+	}
 }
 
 
@@ -99,15 +99,16 @@ require_once("{$root_dir}/config.php");
 // Create database connection
 $db = null;
 try {
-	$db = new mysqli($dbAddr, "adminbot", $restrictedPassword, $dbName);
+	$db = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
 } catch (Exception $ex) {
 	error_out("Unable to open database connection: {$ex->getMessage()}");
+	exit(1);
 }
 
 // Run database migrations
 if (is_dir("{$root_dir}/migrations")) {
 	out("Running database migrations ...");
-	
+
 	// Load timestamp of last run migration script
 	$last_run_migration = 0;
 	if (is_file("{$root_dir}/.db_last_migration")) {

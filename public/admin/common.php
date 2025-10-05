@@ -79,7 +79,8 @@ function check_auth() {
 function print_header($title) {
     $pages = array(
         "Requests" => "admin.php",
-        "Admins" => "admins.php"
+        "Admins" => "admins.php",
+        "Users" => "users.php"
     );
     echo
     "<!DOCTYPE html>

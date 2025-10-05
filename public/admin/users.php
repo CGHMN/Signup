@@ -148,9 +148,6 @@ function process_actions() {
                         }
                     }
                     $stmt->close();
-                    # Reload the WG interface
-                    curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$row["ID"]}");
-                    $response = curl_exec($ch);
                     # If deleting the WG peers failed, abort.
                     if (!$good) {
                         break;

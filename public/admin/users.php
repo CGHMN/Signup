@@ -148,6 +148,9 @@ function process_actions() {
                         }
                     }
                     $stmt->close();
+                    # Reload the WG interface
+                    curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$row["ID"]}");
+                    $response = curl_exec($ch);
                     # If deleting the WG peers failed, abort.
                     if (!$good) {
                         break;
@@ -189,6 +192,14 @@ function process_actions() {
     }
     curl_close($ch);
     $sqlconn->close();
+
+    # Reload the WG peers
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/reload");
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
+    curl_exec($ch);
+    curl_close($ch);
     return $retVal;
 }
 

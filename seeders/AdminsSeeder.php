@@ -16,7 +16,7 @@ return new class
 			INSERT INTO Admins (
 				Username,
 				Password,
-				Permission
+				Permissions
 			) VALUES (
 				"admin",
 				?,

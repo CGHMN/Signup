@@ -54,7 +54,17 @@ function verify_and_submit() {
             <body>
                 <p>
                 You have successfully signed up to CGHMN.<br>
-                Your request will be reviewed by an admin shortly.
+                Your request will be reviewed by an admin shortly.<br>
+                Once approved, you will recieve an email confirmation with your:
+                <ul>
+                    <li>Tunnel IP</li>
+                    <li>Routed Subnet</li>
+                    <li>Preshared Key</li>
+                </ul>
+                and an example WireGuard config you can use.<br>
+                If you have any questions, please reach out to:<br>
+                <a href=\"mailto:contact@cghmn.org\">contact@cghmn.org</a>.<br>
+                You may now close this window.
                 </p>
             </body>
             </html>";

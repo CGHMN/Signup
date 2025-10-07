@@ -13,7 +13,7 @@ function draw_requests_table() {
     global $dbAddr;
     global $dbName;
 
-    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
     if ($sqlconn->connect_error) {
         echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
         return;
@@ -21,8 +21,8 @@ function draw_requests_table() {
 
     # Retrieve the list of pending requests.
     $result = $sqlconn->query(
-        "SELECT ID, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details 
-        FROM $dbName.Requests
+        "SELECT ID, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details, Status 
+        FROM Requests
         WHERE Status = 0", MYSQLI_USE_RESULT);
     if (!$result) {
         echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
@@ -105,6 +105,7 @@ function draw_requests_table() {
 
     # Fin.
     $result->free_result();
+    $sqlconn->close();
     echo "</form>";
 }
 
@@ -213,14 +214,23 @@ function process_requests() {
                         break;
                     }
 
-                    if (mail($req["Email"], "Welcome to CGHMN!", 
-                        "Dear {$req["Username"]},\r\n" .
-                        "Welcome to CGHMN!\r\n" .
-                        "Your tunnel IP is {$decodedRes["tunnel_ip"]},\r\n" .
-                        "Your WireGuard Preshared Key is {$decodedRes["preshared_key"]},\r\n" . 
-                        "And your routed subnet is {$decodedRes["allowed_ips"][0]["cidr"]}.\r\n" .
-                        "Here's an example config you can use:\r\n---\r\n" .
-                        $response)) {
+                    # Create the Email contents
+                    $body =
+                    "Dear {$req["Username"]},\r\n" .
+                    "Welcome to CGHMN!\r\n" .
+                    "Your tunnel IP is {$decodedRes["tunnel_ip"]},\r\n" .
+                    "Your WireGuard Preshared Key is {$decodedRes["preshared_key"]},\r\n" . 
+                    "And your routed subnet is {$decodedRes["allowed_ips"][0]["cidr"]}.\r\n" .
+                    "Here's an example config you can use:\r\n---\r\n" .
+                    $response . "\r\n---\r\n" .
+                    "If you're not sure how to set up your CGHMN Router,\r\n" .
+                    "you can find some beginner-friendly instructions at:\r\n" .
+                    "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
+                    "If you need help with anything,\r\n" .
+                    "feel free to reach out at\r\n" .
+                    "contact@cghmn.org";
+
+                    if (mail($req["Email"], "Welcome to CGHMN!", $body)) {
                         $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");
                         $stmt->bind_param("i", $req["ID"]);
                         if ($stmt->execute()) {

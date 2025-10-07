@@ -24,11 +24,11 @@ function verify_login() {
             return "you must enter a password.";
         }
 
-        $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
+        $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword, $dbName);
         if ($sqlconn->connect_error) {
             return "something went wrong.";
         }
-        $stmt = $sqlconn->prepare("SELECT ID, Password, Permissions FROM $dbName.Admins WHERE username = ?");
+        $stmt = $sqlconn->prepare("SELECT ID, Password, Permissions FROM Admins WHERE username = ?");
         $stmt->bind_param("s", $_POST["username"]);
         if (!$stmt->execute()) {
             $sqlconn->close();

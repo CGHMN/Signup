@@ -42,12 +42,12 @@ function verify_and_add() {
         }
         
         # Add the new user to the DB.
-        $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
+        $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
         if ($sqlconn->connect_error) {
             return "failed to connect to database.";
         }
         $passwordHash = password_hash($_POST["password-1"], PASSWORD_DEFAULT);
-        $stmt = $sqlconn->prepare("REPLACE INTO $dbName.Admins (Username, Password, Permissions) VALUES (?, ?, ?)");
+        $stmt = $sqlconn->prepare("REPLACE INTO Admins (Username, Password, Permissions) VALUES (?, ?, ?)");
         $stmt->bind_param("ssi", $_POST["username"], $passwordHash, $perms);
         try {
             if ($stmt->execute()) {

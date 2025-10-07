@@ -7,6 +7,7 @@ if (!check_auth()) {
     header("Location: ./");
     die();
 }
+
 # Handle the submitted user info.
 function verify_and_update() {
     global $unrestrictedPassword;
@@ -26,12 +27,12 @@ function verify_and_update() {
         }
 
         # Check the user's current password.
-        $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
+        $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
         if ($sqlconn->connect_error) {
             return array("type" => 1, "msg" => "failed to connect to database.");
         }
 
-        $stmt = $sqlconn->prepare("SELECT Password FROM $dbName.Admins WHERE ID = ?");
+        $stmt = $sqlconn->prepare("SELECT Password FROM Admins WHERE ID = ?");
         $stmt->bind_param("i", $_SESSION["userId"]);
         if (!$stmt->execute()) {
             $sqlconn->close();

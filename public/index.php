@@ -111,7 +111,7 @@ if ($_POST) {
             <label for="other-preferred">Other</label>
             <p>If you put something other than email, please give details on how we can contact you using your preferred method.</p>
             <textarea name="contact-details" id="contact-details" rows="6" cols="40"></textarea><br>
-            <input type="submit">
+            <input type="submit" value="Submit Request">
         </form>
     </body>
 </html>

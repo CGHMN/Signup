@@ -40,7 +40,11 @@ body {
     margin: 10px auto;
 }
 
-.data-table tbody tr * {
+.data-table tbody tr td {
+    border: 1px solid black;
+}
+
+.data-table tbody tr th {
     border: 1px solid black;
 }
 

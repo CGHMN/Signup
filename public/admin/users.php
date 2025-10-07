@@ -13,14 +13,14 @@ function draw_users_table() {
     global $dbAddr;
     global $dbName;
 
-    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
     if ($sqlconn->connect_error) {
         echo "<p>Sorry, we can't retrieve the list of users right now. Please try again later.</p>";
         return;
     }
 
     # Retrieve the list of users.
-    $result = $sqlconn->query("SELECT ID, Username, Email, Contact, Contact_Details FROM $dbName.Users", MYSQLI_USE_RESULT);
+    $result = $sqlconn->query("SELECT ID, Username, Email, Contact, Contact_Details FROM Users", MYSQLI_USE_RESULT);
     if (!$result) {
         echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
         return;
@@ -32,7 +32,7 @@ function draw_users_table() {
     # Start the table.
     echo
     "<h3 class=\"form-header\">Users</h3>
-    <form action=\"", htmlspecialchars($_SERVER["PHP_SELF"]), "\" method=\"post\">
+    <form action=\"banuser.php\" method=\"post\">
     <table class=\"data-table\">
     <tbody>
     <tr>
@@ -44,7 +44,7 @@ function draw_users_table() {
     </tr>";
 
     # Print all the users
-    while (($row = $result->fetch_assoc()) !== null) {
+    while (!is_null($row = $result->fetch_assoc())) {
         # If the contact details are ridiculously long, shorten them.
         $contactDetails = $row["Contact_Details"];
 
@@ -55,9 +55,9 @@ function draw_users_table() {
         echo 
        "<tr>
         <td>", htmlspecialchars($row["Username"]), "</td>
-        <td>", htmlspecialchars($row["Email"]), "</td>
+        <td style=\"max-width: 20vw; word-break: break-all;\">", htmlspecialchars($row["Email"]), "</td>
         <td>", htmlspecialchars($row["Contact"]), "</td>
-        <td>", htmlspecialchars($contactDetails), "</td>
+        <td style=\"max-width: 20vw;\">", htmlspecialchars($contactDetails), "</td>
         <td>
         <select id=\"decision-", $row["ID"], "\" name=\"decision-", $row["ID"], "\">
         <option value=\"none\">Do Nothing</option>
@@ -84,125 +84,124 @@ function draw_users_table() {
     echo "</form>";
 }
 
-function process_actions() {
+function draw_user_viewer() {
     global $unrestrictedPassword;
     global $dbAddr;
     global $dbName;
-    global $router;
-    global $rtrAPIKey;
-    global $perm;
 
-    # If the user doesn't have permission to manage users, return.
-    if ($_SESSION["permissions"] & $perm["manage-users"]) {
-        return null;
+    # The user to get info on
+    $user = null;
+
+    # Whether we were able to get info on said user.
+    $found = false;
+    $wgPeers = null;
+
+    if ($_POST && isset($_POST["username"]) && is_string($_POST["username"])) {
+        $user = $_POST["username"];
     }
 
-    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
-    if ($sqlconn->connect_error) {
-        return "failed to connect to the database.";
+    if ($user) {
+        $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
+        if ($sqlconn->connect_error) {
+            echo "<p>Sorry, we can't retrieve the list of users right now. Please try again later.</p>";
+            return;
+        }
+        
+        # Retrieve the user's info.
+        $stmt = $sqlconn->prepare("SELECT ID, Email, Contact, Contact_Details FROM Users WHERE Username = ?");
+        $stmt->bind_param("s", $user);
+        if (!$stmt->execute()) {
+            echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
+            $sqlconn->close();
+            return;
+        }
+        $stmt->bind_result($id, $email, $contact, $contactDetails);
+        $status = $stmt->fetch();
+        if ($status === false) {
+            echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
+            $sqlconn->close();
+            return;
+        }
+        if ($status) {
+            $found = true;
+            # Get the user's WG peers.
+            $stmt->close();
+            $stmt = $sqlconn->prepare("SELECT TunnelIP, AllowedIPs, Pubkey, PSK FROM WG_Peers WHERE UserID = ?");
+            $stmt->bind_param("i", $id);
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+                # If any WG peers were found, retrieve them.
+                while ($row = $result->fetch_assoc()) {
+                    if (is_null($wgPeers)) {
+                        $wgPeers = array();
+                    }
+                    array_push($wgPeers, $row);
+                }
+            }
+        }
+        # Close the connection.
+        $sqlconn->close();
     }
-    $retVal = array("banned" => 0, "errors" => array());
 
-    # Build the cURL handle we'll use.
+    # Start the table.
+    echo
+    "<h3 class=\"form-header\">User Viewer</h3>
+    <form action=\"", htmlspecialchars($_SERVER["PHP_SELF"]), "\" method=\"post\">
+    <table class=\"data-table\">
+    <tbody>
+    <tr>
+    <td><label for=\"viewer-uname\">Username</label></td>
+    <td><input id=\"viewer-uname\" name=\"username\" type=\"input\" value=\"", ($user) ? $user : "", "\"></td>
+    </tr>";
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    foreach ($_SESSION["Users"] as $id => $usr) {
-        $name = "decision-$id";
-        if (isset($_POST[$name]) && is_string($_POST[$name])) {
-            $decision = $_POST[$name];
-            switch ($decision) {
-                case "ban":
-                    # Get the user's WG peers from the databse.
-                    $stmt = $sqlconn->prepare("SELECT ID FROM $dbName.WG_Peers WHERE UserID = ?");
-                    $stmt->bind_param("i", $usr["ID"]);
-                    try {
-                        if (!$stmt->execute()) {
-                            array_push($retVal["errors"], "Failed to retrieve Wireguard peers from database.");
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        array_push($retVal["errors"], "Something went wrong retrieving Wireguard peers from database.");
-                        break;
+    # Print the user's info (if we found it).
+    if (!$user) {
+        echo "<tr><td>Please enter a username to get started.</td><td></td><tr>";
+    } else if (!$found) {
+        echo "<tr><td>Couldn't find any info on that user.</td><td></td><tr>";
+    } else {
+        echo 
+        "<tr><td>Email</td><td style=\"max-width: 20vw;\">", htmlspecialchars($email), "</td></tr>",
+        "<tr><td>Contact Method</td><td>", htmlspecialchars($contact), "</td></tr>",
+        "<tr><td style=\"max-width: 20vw;\">Contact Details</td><td style=\"max-width: 20vw;\">", htmlspecialchars($contactDetails), "</td></tr>";
+        # If we found the user's WireGuard peers, print them.
+        if (is_array($wgPeers)) {
+            echo "<tr><td>Number of WireGuard Peers</td><td>" . count($wgPeers) . "</td></tr>";
+            $peerNum = 0;
+            # Print each peer
+            foreach($wgPeers as $peer) {
+                $peerNum++;
+                # Decode the JSON encoded allowed IPs.
+                $allowedIPs = json_decode($peer["AllowedIPs"], true);
+                echo 
+                "<tr><td>WireGuard Peer $peerNum</td><td></td></tr>",
+                "<tr><td>Tunnel IP</td><td>", htmlspecialchars($peer["TunnelIP"]), "</td></tr>",
+                "<tr><td>Allowed IPs</td><td style=\"max-width: 20vw;\">";
+                # Print each of the user's routed subnets.
+                $subnetNum = 0;
+                foreach($allowedIPs as $subnet) {
+                    if ($subnetNum !== 0) {
+                        echo ", ";
                     }
-                    # Iterate through the WG peers
-                    $result = $stmt->get_result();
-                    # Avoid orphaned WG peers
-                    $good = true;
-                    while ($row = $result->fetch_assoc()) {
-                        # Delete the WG peers
-                        curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$row["ID"]}");
-                        $response = curl_exec($ch);
-                        if (!$response) {
-                            array_push($retVal["errors"], "The router didn't respond to the API request.");
-                            $good = false;
-                            break;
-                        }
-                        if ($response != 1) {
-                            array_push($retVal["errors"], "Something went wrong while deleting the WG peer.");
-                            $good = false;
-                            break;
-                        }
-                    }
-                    $stmt->close();
-                    # If deleting the WG peers failed, abort.
-                    if (!$good) {
-                        break;
-                    }
-                    # Delete the WG peers from the DB
-                    $stmt = $sqlconn->prepare("DELETE FROM $dbName.WG_Peers WHERE UserID = ?");
-                    $stmt->bind_param("i", $usr["ID"]);$stmt->bind_param("i", $usr["ID"]);
-                    try {
-                        if (!$stmt->execute()) {
-                            array_push($retVal["errors"], "Failed to delete Wireguard peers from database.");
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        array_push($retVal["errors"], "Something went wrong while deleting Wireguard peers from database.");
-                        break;
-                    }
-                    $stmt->close();
-                    # Delete them from the list of users
-                    $stmt = $sqlconn->prepare("DELETE FROM $dbName.Users WHERE ID = ?");
-                    $stmt->bind_param("i", $usr["ID"]);$stmt->bind_param("i", $usr["ID"]);
-                    try {
-                        if (!$stmt->execute()) {
-                            array_push($retVal["errors"], "Failed to delete user from database.");
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        array_push($retVal["errors"], "Something went wrong while the user from database.");
-                        break;
-                    }
-                    # We have successfully banned a user.
-                    $retVal["banned"]++;
-                    break;
-                case "none":
-                    break;
-                default:
-                    break;
+                    echo htmlspecialchars($subnet["cidr"]);
+                    $subnetNum++;
+                }
+                echo "</td></tr>",
+                "<tr><td>Public Key</td><td>", htmlspecialchars($peer["Pubkey"]), "</td></tr>",
+                "<tr><td>Preshared Key</td><td>", htmlspecialchars($peer["PSK"]), "</td></tr>";
             }
         }
     }
-    curl_close($ch);
-    $sqlconn->close();
-
-    # Reload the WG peers
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/reload");
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
-    curl_exec($ch);
-    curl_close($ch);
-    return $retVal;
+    # End the table.
+    echo "<tr><td><input type=\"submit\" value=\"View User\"></td><td></td></tr></tbody></table></form>";
 }
 
 # If we recieved a list of decisions, process them.
-if ($_POST && isset($_SESSION["Users"]) && is_array($_SESSION["Users"])) {
-    $reqResult = process_actions();
+if (isset($_SESSION["lastAction"])) {
+    if ($_SESSION["lastAction"]["name"] === "ban_users") {
+        $reqResult = $_SESSION["lastAction"]["ret"];
+    }
+    unset($_SESSION["lastAction"]);
 }
 
 # Header
@@ -214,7 +213,7 @@ draw_users_table();
 
 # Print the outcome of processing the actions.
 if (isset($reqResult)) {
-    if ($reqResult == null) {
+    if (is_null($reqResult)) {
         echo "<p>Something went wrong handling requests.</p>";
     } else if (is_string($reqResult)) {
         echo "<p>Sorry, $reqResult Please try again later</p>";
@@ -230,6 +229,11 @@ if (isset($reqResult)) {
         echo "</p>";
     }
 }
+echo "</div>";
+
+# Print the user viewer
+echo "<div>";
+draw_user_viewer();
 echo "</div>";
 
 print_footer();

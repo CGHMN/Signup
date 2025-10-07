@@ -23,7 +23,7 @@ function draw_requests_table() {
     $result = $sqlconn->query(
         "SELECT ID, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details, Status 
         FROM Requests
-        WHERE Status = 0", MYSQLI_USE_RESULT);
+        ORDER BY STATUS DESC", MYSQLI_USE_RESULT);
     if (!$result) {
         echo "<p>Sorry, we can't retrieve the list of requests right now. Please try again later.</p>";
         return;
@@ -49,55 +49,89 @@ function draw_requests_table() {
     <th>Decision</th>
     </tr>";
 
+    # Keep track of how many times we've seen each username and email.
+    $usernamesSeen = array();
+    $emailsSeen = array();
+    $requestsPending = 0;
+
     # Print all the requests
     while ($row = $result->fetch_assoc()) {
-        # Convert the boolean hosting & experience fields to strings.
-        $hosting = "N/A";
-        $expr = "N/A";
-        if (!is_null($row["Hosting"])) {
-            $hosting = ($row["Hosting"]) ? "Yes" : "No";
+        # Figure out if we've seen this user or their email before.
+        if (!isset($usernamesSeen[$row["Username"]])) {
+            $usernamesSeen[$row["Username"]] = 0;
         }
-        if (!is_null($row["Experience"])) {
-            $expr = ($row["Experience"]) ? "Yes" : "No";
+        if (!isset($emailsSeen[$row["Email"]])) {
+            $emailsSeen[$row["Email"]] = 0;
         }
+        $usernamesSeen[$row["Username"]]++;
+        $emailsSeen[$row["Email"]]++;
 
-        # If the plan or contact details are ridiculously long, shorten them.
-        $plan = $row["Plan"];
-        $contactDetails = $row["Contact_Details"];
+        # If this request is pending, print it.
+        # why the hell does MySQL return integers as strings???
+        if ($row["Status"] === "0") {
+            $unameSeen = $usernamesSeen[$row["Username"]];
+            $emailSeen = $emailsSeen[$row["Email"]];
 
-        if (strlen($plan) > 1000) {
-            $plan = substr($plan, 0, 997) . "...";
+            # Convert the boolean hosting & experience fields to strings.
+            $hosting = "N/A";
+            $expr = "N/A";
+            if (!is_null($row["Hosting"])) {
+                $hosting = ($row["Hosting"]) ? "Yes" : "No";
+            }
+            if (!is_null($row["Experience"])) {
+                $expr = ($row["Experience"]) ? "Yes" : "No";
+            }
+
+            # If the plan or contact details are ridiculously long, shorten them.
+            $plan = $row["Plan"];
+            $contactDetails = $row["Contact_Details"];
+
+            if (strlen($plan) > 1000) {
+                $plan = substr($plan, 0, 997) . "...";
+            }
+            if (strlen($contactDetails) > 1000) {
+                $contactDetails = substr($contactDetails, 0, 997) . "...";
+            }
+
+            echo 
+            "<tr>
+            <td style=\"max-width: 20vw;\">", htmlspecialchars($row["Username"]);
+            # If someone with the same username has submitted a request before, print a warning.
+            if ($unameSeen > 1) {
+                echo "<br><span style=\"color: red\">*</span>Warning! There have been $unameSeen requests with this username!";
+            }
+            echo
+            "</td>
+            <td style=\"max-width: 20vw; word-break: break-all;\">", htmlspecialchars($row["Email"]);
+            # If someone with the same email has submitted a request before, print a warning.
+            if ($emailSeen > 1) {
+                echo "<br><span style=\"color: red\">*</span>Warning! There have been $emailSeen requests with this email address!";
+            }
+            echo "</td>
+            <td style=\"max-width: 20vw;\">", htmlspecialchars($plan), "</td>
+            <td>", htmlspecialchars($hosting), "</td>
+            <td>", htmlspecialchars($expr), "</td>
+            <td>", htmlspecialchars($row["Contact"]), "</td>
+            <td style=\"max-width: 20vw;\">", htmlspecialchars($contactDetails), "</td>
+            <td>
+            <select id=\"decision-", $row["ID"], "\" name=\"decision-", $row["ID"], "\">
+            <option value=\"none\">Do Nothing</option>
+            <option value=\"approve\">Approve</option>
+            <option value=\"reject\">Reject</option>
+            </select>
+            </td>";
+
+            # Add the request to the list.
+            $_SESSION["Requests"][$row["ID"]] = $row;
+            $requestsPending++;
         }
-        if (strlen($contactDetails) > 1000) {
-            $contactDetails = substr($contactDetails, 0, 997) . "...";
-        }
-
-        echo 
-       "<tr>
-        <td>", htmlspecialchars($row["Username"]), "</td>
-        <td>", htmlspecialchars($row["Email"]), "</td>
-        <td>", htmlspecialchars($plan), "</td>
-        <td>", htmlspecialchars($hosting), "</td>
-        <td>", htmlspecialchars($expr), "</td>
-        <td>", htmlspecialchars($row["Contact"]), "</td>
-        <td>", htmlspecialchars($contactDetails), "</td>
-        <td>
-        <select id=\"decision-", $row["ID"], "\" name=\"decision-", $row["ID"], "\">
-        <option value=\"none\">Do Nothing</option>
-        <option value=\"approve\">Approve</option>
-        <option value=\"reject\">Reject</option>
-        </select>
-        </td>";
-
-        # Add the request to the list.
-        $_SESSION["Requests"][$row["ID"]] = $row;
     }
 
     # End the table.
     echo "</tbody></table>";
 
     # Add the submit button or the no results message
-    if ($result->num_rows === 0) {
+    if ($requestsPending === 0) {
         echo "<p class=\"data-table-footer\">No requests were found! :D</p>";
     } else {
         echo "<input class=\"data-table-footer\" type=\"submit\" value=\"Go!\">";
@@ -122,7 +156,7 @@ function process_requests() {
         return null;
     }
 
-    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "adminbot", $unrestrictedPassword, $dbName);
     if ($sqlconn->connect_error) {
         return "failed to connect to the database.";
     }
@@ -172,7 +206,7 @@ function process_requests() {
                     }
 
                     # Add the user to the DB.
-                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
+                    $stmt = $sqlconn->prepare("INSERT INTO Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
                     $stmt->bind_param("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
                     try {
                         if (!$stmt->execute()) {
@@ -193,7 +227,7 @@ function process_requests() {
 
                     # Add the user's WG peer to the DB.
                     $allowedIPs = json_encode($decodedRes["allowed_ips"]);
-                    $stmt = $sqlconn->prepare("INSERT INTO $dbName.WG_Peers (ID, UserID, TunnelIP, AllowedIPs, Pubkey, PSK) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt = $sqlconn->prepare("INSERT INTO WG_Peers (ID, UserID, TunnelIP, AllowedIPs, Pubkey, PSK) VALUES (?, ?, ?, ?, ?, ?)");
                     $stmt->bind_param("isssss", $decodedRes["id"], $userID, $decodedRes["tunnel_ip"], $allowedIPs, $decodedRes["public_key"], $decodedRes["preshared_key"]);
                     try {
                         if (!$stmt->execute()) {
@@ -230,7 +264,11 @@ function process_requests() {
                     "feel free to reach out at\r\n" .
                     "contact@cghmn.org";
 
-                    if (mail($req["Email"], "Welcome to CGHMN!", $body)) {
+                    $headers =
+                    "From: noreply@cghmn.org\r\n" .
+                    "Reply-To: contact@cghmn.org\r\n";
+
+                    if (mail($req["Email"], "Welcome to CGHMN!", $body, $headers)) {
                         $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");
                         $stmt->bind_param("i", $req["ID"]);
                         if ($stmt->execute()) {
@@ -273,7 +311,7 @@ draw_requests_table();
 
 # Print the outcome of processing the requests.
 if (isset($reqResult)) {
-    if ($reqResult == null) {
+    if (is_null($reqResult)) {
         echo "<p>Something went wrong handling requests.</p>";
     } else if (is_string($reqResult)) {
         echo "<p>Sorry, $reqResult Please try again later</p>";

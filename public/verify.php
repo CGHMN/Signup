@@ -13,14 +13,14 @@ function verify_and_submit() {
     }
 
     # Prepare to send the request to the database.
-    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword, $dbName);
     if ($sqlconn->connect_error) {
         return "something went wrong.";
     }
 
     # Check if the user has already submitted a request.
-    $stmt = $sqlconn->prepare("SELECT ID FROM $dbName.Requests WHERE Username = ? AND (Status = 0 OR Status = 1)");
-    $stmt->bind_param("s", $_SESSION["formdata"]["username"]);
+    $stmt = $sqlconn->prepare("SELECT ID FROM Requests WHERE (Username = ? OR Email = ?) AND (Status = 0 OR Status = 1)");
+    $stmt->bind_param("ss", $_SESSION["formdata"]["username"], $_SESSION["formdata"]["email"]);
     if (!$stmt->execute()) {
         $sqlconn->close();
         return "something went wrong while connecting to the database.";
@@ -33,11 +33,13 @@ function verify_and_submit() {
         $sqlconn->close();
         return "you have already submitted a request.";
     }
+    $stmt->free_result();
+    $stmt->close();
 
     # Store request to the DB.
     $status = 0;
     $stmt = $sqlconn->prepare(
-        "INSERT INTO $dbName.Requests 
+        "INSERT INTO Requests 
         (Status, Username, Email, Pubkey, Plan, Hosting, Experience, Contact, Contact_Details) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("issssiiss", 

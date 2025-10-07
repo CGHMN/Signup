@@ -14,7 +14,7 @@ print_header("Admin Management");
 # If the user just attempted to create a user, let them know if that succeeded.
 if (isset($_SESSION["lastAction"])) {
     if ($_SESSION["lastAction"]["name"] === "create_admin") {
-        if ($_SESSION["lastAction"]["ret"] === null) {
+        if (is_null($_SESSION["lastAction"]["ret"])) {
             echo "<p>Sorry, something went wrong. Please try again.</p>";
         } else if (is_string($_SESSION["lastAction"]["ret"])) {
             echo "<p>Sorry, {$_SESSION["lastAction"]["ret"]} Please try again.</p>";
@@ -22,7 +22,7 @@ if (isset($_SESSION["lastAction"])) {
             echo "<p>User created successfully.</p>";
         }
     } else if ($_SESSION["lastAction"]["name"] === "change_password") {
-        if ($_SESSION["lastAction"]["ret"] === null) {
+        if (is_null($_SESSION["lastAction"]["ret"])) {
             echo "<p>Sorry, something went wrong. Please try again.</p>";
         } else if (is_string($_SESSION["lastAction"]["ret"])) {
             echo "<p>Sorry, ", $_SESSION["lastAction"]["ret"], " Please try again.</p>";

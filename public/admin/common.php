@@ -46,13 +46,13 @@ function check_auth() {
         return true;
     }
 
-    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword);
+    $sqlconn = new mysqli($dbAddr, "submitbot", $restrictedPassword, $dbName);
     if ($sqlconn->connect_error) {
         print_fatal_error("we're experiencing a database failure.");
     }
 
     # Look for the user
-    $stmt = $sqlconn->prepare("SELECT Username, Permissions FROM $dbName.Admins WHERE ID = ?");
+    $stmt = $sqlconn->prepare("SELECT Username, Permissions FROM Admins WHERE ID = ?");
     $stmt->bind_param("i", $_SESSION["userId"]);
     if (!$stmt->execute()) {
         print_fatal_error("we've experienced a database failure.");
@@ -79,8 +79,8 @@ function check_auth() {
 function print_header($title) {
     $pages = array(
         "Requests" => "admin.php",
-        "Admins" => "admins.php",
-        "Users" => "users.php"
+        "Users" => "users.php",
+        "Admins" => "admins.php"
     );
     echo
     "<!DOCTYPE html>

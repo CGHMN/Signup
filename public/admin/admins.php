@@ -58,7 +58,7 @@ if (isset($_SESSION["lastAction"])) {
 <tr>
 <td>
 <b class="form-label">Allow the new admin to:</b>
-<hr style="width: 200%">
+<hr style="width: 150%">
 </td>
 <td></td>
 </tr>

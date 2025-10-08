@@ -52,7 +52,10 @@ function verify_and_submit() {
             echo 
             "<!DOCTYPE html>
             <html>
-            <head></head>
+            <head>
+                <title>CGHMN Sign-up Confirmation</title>
+                <link rel=\"stylesheet\" href=\"theme/cghmn.css\">
+            </head>
             <body>
                 <p>
                 You have successfully signed up to CGHMN.<br>
@@ -85,6 +88,7 @@ if ($_POST) {
 <!DOCTYPE html>
 <html>
     <head>
+        <title>CGHMN Email Verification</title>
     </head>
     <body>
         <h1>CGHMN Email Verification</h1>

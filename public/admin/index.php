@@ -62,6 +62,8 @@ if ($_POST) {
 <!DOCTYPE html>
 <html>
     <head>
+        <title>CGHMN Admin Login</title>
+        <link rel="stylesheet" href="../theme/cghmn.css">
     </head>
     <body>
         <h1>CGHMN Admin Login</h1>

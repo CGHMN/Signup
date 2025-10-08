@@ -3,7 +3,7 @@ body {
 }
 
 #topbar {
-    background-color: #d0d0d0;
+    background-color: #004d7b;
 }
 
 #titlebar {
@@ -32,7 +32,7 @@ body {
 }
 
 .menu-item:hover {
-    background-color: #9b9b9b;
+    background-color: #00639c;
 }
 
 .data-table {

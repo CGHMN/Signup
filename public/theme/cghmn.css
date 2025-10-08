@@ -1,0 +1,261 @@
+.header, .main, .footer {
+  padding: 1em;
+}
+.header, .footer {
+  text-align: center;
+}
+.nav {
+  text-align: left;
+}
+img.logo {
+  display:inline;
+  padding: 1em;
+  padding-bottom: 0;
+}
+
+.form-field {
+  margin-bottom: 1em;
+}
+.radio {
+  display: inline-block;
+}
+img#basic-captcha-reload {
+  margin-top: 10px;
+  margin-bottom: -12px;
+}
+button.reload-captcha-button {
+  display: none;
+  margin-bottom: 10px;
+  height: 40px;
+  width: 40px;
+}
+
+html {
+  font-family: Verdana, Arial, Helvetica;
+  background-color: #0c0c0c;
+  background-image: url(/theme/wertilea.jpg);
+}
+body {
+  color: #ffff00;
+  font-size: 16px;
+}
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.1;
+  font-weight: 700;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  -ms-word-break: break-all;
+  word-break: break-word;
+}
+  
+h1 {
+  display: inline;
+  font-size: 60px;
+}
+
+h2 {
+  font-size: 40px;
+}
+
+h3 {
+  font-size: 32px;
+}
+
+h4 {
+  font-size: 28px;
+}
+
+h5 {
+  font-size: 24px;
+}
+
+h6 {
+  font-size: 20px;
+}
+
+.top {
+  margin-top: 0px;
+}
+  
+p {
+  margin-top: 0px;
+  margin-bottom: 1.5rem;
+}
+
+small, sub, sup {
+  font-size: 75%;
+}
+  
+hr {
+  border-color: #c1c1c1;
+}
+  
+a {
+  color: #c1c1c1;
+}
+a:hover {
+  color: #f3f3f3;
+}
+  
+ul, ol {
+  padding-left: 1.4em;
+  margin-top: 0px;
+}
+
+li {
+  margin-bottom: 0.4em;
+}
+
+li ul, li ol {
+  margin-bottom: 0px;
+  margin-top: 0.4em;
+}
+  
+blockquote {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 1em;
+  padding-top: 0.8em;
+  padding-bottom: 0.8em;
+  padding-right: 0.8em;
+  border-left: 5px solid #ffffff;
+  margin-bottom: 2.5rem;
+  background-color: #242424;
+}
+
+blockquote p {
+  margin-bottom: 0;
+}
+
+img, video {
+  height: auto;
+  max-width: 100%;
+  margin-top: 0px;
+}
+  
+/* Pre and Code */
+pre {
+  background-color: #242424;
+  display: block;
+  padding: 1em;
+  overflow-x: auto;
+  margin-top: 0px;
+  margin-bottom: 2.5rem;
+  font-size: 0.9em;
+}
+  
+code, kbd, samp {
+  font-size: 0.9em;
+  padding: 0 0.5em;
+  background-color: #242424;
+  white-space: pre-wrap;
+}
+  
+pre > code {
+  padding: 0;
+  background-color: transparent;
+  white-space: pre;
+  font-size: 1em;
+}
+  
+/* Tables */
+table {
+  text-align: justify;
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+  
+td, th {
+  padding: 0.5em;
+  border-bottom: 1px solid #242424;
+}
+  
+.button, button, input[type=radio], input[type=submit], input[type=reset], input[type=button], input[type=file]::file-selector-button {
+  display: inline-block;
+  padding: 5px 10px;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: #242424;
+  border: 1px solid #242424;
+  color: #c1c1c1;
+  border-radius: 1px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.button[disabled], button[disabled], input[type=submit][disabled], input[type=reset][disabled], input[type=button][disabled], input[type=file]::file-selector-button[disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+.button:hover, button:hover, input[type=submit]:hover, input[type=reset]:hover, input[type=button]:hover, input[type=file]::file-selector-button:hover {
+  background-color: #c1c1c1;
+  color: #3e3e3e;
+  outline: 0;
+}
+.button:focus-visible, button:focus-visible, input[type=submit]:focus-visible, input[type=reset]:focus-visible, input[type=button]:focus-visible, input[type=file]::file-selector-button:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+}
+  
+textarea, select, input {
+  color: #c1c1c1;
+  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+  margin-bottom: 10px;
+  background-color: #242424;
+  border: 1px solid #242424;
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+textarea, select, input[type=text], input[type=password], input[type=file] {
+  width: 100%;
+}
+
+textarea:focus, select:focus, input:focus {
+  border: 1px solid #c1c1c1;
+  outline: 0;
+}
+  
+input[type=checkbox]:focus {
+  outline: 1px dotted #c1c1c1;
+}
+  
+legend, fieldset {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.notices {
+  margin: 24px 0;
+  padding: 1px 1px 1px 30px;
+}
+.notices p {
+  margin: 16px 0;
+}
+
+.notices.yellow {
+  color: #f3f30c;
+  background-color: #3e3e0c;
+  border: 1px solid #c1c10c;
+}
+
+.notices.red {
+  color: #f30c0c;
+  background-color: #240c0c;
+  border: 1px solid #c10c0c;
+}
+
+.notices.blue {
+  color: #0c0cf3;
+  background-color: #0c0c24;
+  border: 1px solid #0c0cc1;
+}
+
+.notices.green {
+  color: #00f30c;
+  background-color: #0c240c;
+  border: 1px solid #0cc10c;
+}

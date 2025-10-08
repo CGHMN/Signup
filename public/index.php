@@ -53,7 +53,7 @@ if ($_POST) {
             "Dear {$_POST["username"]},\r\n" .
             "Your verification code is:\r\n" . $_SESSION["verifycode"] . "\r\n" .
             "This code expires in 20 minutes.\r\n" .
-            "If you do not recognize this email, please contact basiclogan@outlook.com.", 
+            "If you do not recognize this email, please email contact@cghmn.org.", 
             "From: noreply@cghmn.org")) {
             
             # Redirect to the verification page.
@@ -68,6 +68,8 @@ if ($_POST) {
 <!DOCTYPE html>
 <html>
     <head>
+        <title>CGHMN Sign-Up</title>
+        <link rel="stylesheet" href="theme/cghmn.css">
     </head>
     <body>
         <h1>CGHMN Sign-Up Page</h1>
@@ -113,5 +115,6 @@ if ($_POST) {
             <textarea name="contact-details" id="contact-details" rows="6" cols="40"></textarea><br>
             <input type="submit" value="Submit Request">
         </form>
+        <p><a href="volunteer.html">Know web design? Help us make this page look better!</a></p>
     </body>
 </html>

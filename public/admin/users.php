@@ -160,7 +160,7 @@ function draw_user_viewer() {
     } else if (!$found) {
         echo "<tr><td>Couldn't find any info on that user.</td><td></td><tr>";
     } else {
-        echo 
+        echo
         "<tr><td>Email</td><td style=\"max-width: 20vw;\">", htmlspecialchars($email), "</td></tr>",
         "<tr><td>Contact Method</td><td>", htmlspecialchars($contact), "</td></tr>",
         "<tr><td style=\"max-width: 20vw;\">Contact Details</td><td style=\"max-width: 20vw;\">", htmlspecialchars($contactDetails), "</td></tr>";

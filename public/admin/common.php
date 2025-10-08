@@ -88,6 +88,7 @@ function print_header($title) {
     <head>
     <title>{$title}</title>
     <link rel=\"stylesheet\" href=\"common.css\" />
+    <link rel=\"stylesheet\" href=\"../theme/cghmn.css\">
     </head>
     <body>
     <div id=\"topbar\">

@@ -70,6 +70,12 @@ if ($_POST) {
     <head>
         <title>CGHMN Sign-Up</title>
         <link rel="stylesheet" href="theme/cghmn.css">
+        <style>
+            p {
+                margin-top: 1rem;
+                margin-bottom: 0.5rem;
+            }
+        </style>
     </head>
     <body>
         <h1>CGHMN Sign-Up Page</h1>
@@ -85,7 +91,7 @@ if ($_POST) {
             <label for="email">What's your email address?<span style="color:red"> *</span></label><br>
             <input type="email" name="email" id="email" placeholder="johndoe@gmail.com"><br>
             <label for="pubkey">What's your WireGuard public key?<span style="color:red"> *</span></label><br>
-            <a href="placeholder.html">I don't have one</a><br>
+            <a target="_blank" href="https://cghmn.org/sign-up/keygen">I don't have one</a><br>
             <input type="text" name="pubkey" id="pubkey" placeholder="Public Key"><br>
             <label for="plan">What would you like to do on CGHMN?</label><br>
             <textarea name="plan" id="plan" rows="6" cols="40"></textarea><br>

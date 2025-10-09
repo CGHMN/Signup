@@ -53,8 +53,8 @@ if ($_POST) {
             "Dear {$_POST["username"]},\r\n" .
             "Your verification code is:\r\n" . $_SESSION["verifycode"] . "\r\n" .
             "This code expires in 20 minutes.\r\n" .
-            "If you do not recognize this email, please email contact@cghmn.org.", 
-            "From: noreply@cghmn.org")) {
+            "If you do not recognize this email, please email $contactEmail.", 
+            "From: $email\r\nReply-To: $contactEmail\r\n")) {
             
             # Redirect to the verification page.
             header("Location: verify.php");

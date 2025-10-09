@@ -4,6 +4,7 @@ require __DIR__.'/../config.php';
 function verify_and_submit() {
     # Check that the server state & email verification code are valid.
     global $restrictedPassword;
+    global $contactEmail;
     global $dbAddr;
     global $dbName;
 
@@ -68,7 +69,7 @@ function verify_and_submit() {
                 </ul>
                 and an example WireGuard config you can use.<br>
                 If you have any questions, please reach out to:<br>
-                <a href=\"mailto:contact@cghmn.org\">contact@cghmn.org</a>.<br>
+                <a href=\"mailto:$contactEmail\">$contactEmail</a>.<br>
                 You may now close this window.
                 </p>
             </body>

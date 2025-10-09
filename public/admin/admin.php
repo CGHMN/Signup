@@ -164,7 +164,7 @@ function process_requests() {
 
     # Build the two cURL handles we'll use. Hopefully this is correct.
     $chPost = curl_init();
-    curl_setopt($chPost, CURLOPT_URL, $router . "api/v1/servers/1/gen_new_peer");
+    curl_setopt($chPost, CURLOPT_URL, $router . "servers/1/gen_new_peer");
     curl_setopt($chPost, CURLOPT_POST, 1);
     curl_setopt($chPost, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($chPost, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
@@ -241,7 +241,7 @@ function process_requests() {
                     $stmt->close();
 
                     # Get the example config
-                    curl_setopt($chGet, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$decodedRes["id"]}/config");
+                    curl_setopt($chGet, CURLOPT_URL, $router . "servers/1/peers/{$decodedRes["id"]}/config");
                     $response = curl_exec($chGet);
                     if (!$response || !is_string($response)) {
                         array_push($retVal["errors"], "The router didn't respond to the API request.");

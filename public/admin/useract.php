@@ -67,7 +67,7 @@ function process_actions() {
                     $good = true;
                     while ($row = $result->fetch_assoc()) {
                         # Delete the WG peers
-                        curl_setopt($chDel, CURLOPT_URL, $router . "api/v1/servers/1/peers/{$row["ID"]}");
+                        curl_setopt($chDel, CURLOPT_URL, $router . "servers/1/peers/{$row["ID"]}");
                         $response = curl_exec($chDel);
                         if (!$response) {
                             array_push($retVal["errors"], "The router didn't respond to the API request.");
@@ -139,7 +139,7 @@ function process_actions() {
                     $decodedIPs = json_decode($allowedIPs, true);
 
                     # Get the example config from the Wireguard API
-                    curl_setopt($chGet, CURLOPT_URL, $router . "api/v1/servers/1/peers/$peerID/config");
+                    curl_setopt($chGet, CURLOPT_URL, $router . "servers/1/peers/$peerID/config");
                     $response = curl_exec($chGet);
                     if (!$response || !is_string($response)) {
                         array_push($retVal["errors"], "The router didn't respond to the API request.");
@@ -176,7 +176,7 @@ function process_actions() {
     # Reload the WG peers if we need to
     if ($modified) {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $router . "api/v1/servers/1/reload");
+        curl_setopt($ch, CURLOPT_URL, $router . "servers/1/reload");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-API-Key: {$rtrAPIKey}"));
         curl_exec($ch);

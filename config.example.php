@@ -14,7 +14,13 @@ $dbAddr = "127.0.0.1";
 $dbName = "cghmn_signups";
 
 # URL of the router API
-$router = "<router>";
+$router = "<router>/api/v1/";
 
 # Router API key
 $rtrAPIKey = "<router API key>";
+
+# Email address to use for emailing
+$email = "noreply@your-domain.com";
+
+# Email address to direct users to contact
+$contactEmail = "contact@your-domain.com";

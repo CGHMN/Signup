@@ -112,6 +112,9 @@ Fields:
  * routedSubnet
  * exampleConfig*/
 function send_confirmation_email($user) {
+    global $email;
+    global $contactEmail;
+
     # Create the Email contents
     $body =
     "Dear {$user["username"]},\r\n" .
@@ -126,11 +129,11 @@ function send_confirmation_email($user) {
     "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
     "If you need help with anything,\r\n" .
     "feel free to reach out at\r\n" .
-    "contact@cghmn.org";
+    "$contactEmail";
 
     $headers =
-    "From: noreply@cghmn.org\r\n" .
-    "Reply-To: contact@cghmn.org\r\n";
+    "From: $email\r\n" .
+    "Reply-To: $contactEmail\r\n";
 
     return mail($user["email"], "Welcome to CGHMN!", $body, $headers);
 }

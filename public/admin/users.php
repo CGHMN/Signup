@@ -32,7 +32,7 @@ function draw_users_table() {
     # Start the table.
     echo
     "<h3 class=\"form-header\">Users</h3>
-    <form action=\"banuser.php\" method=\"post\">
+    <form action=\"useract.php\" method=\"post\">
     <table class=\"data-table\">
     <tbody>
     <tr>
@@ -61,6 +61,7 @@ function draw_users_table() {
         <td>
         <select id=\"decision-", $row["ID"], "\" name=\"decision-", $row["ID"], "\">
         <option value=\"none\">Do Nothing</option>
+        <option value=\"resend\">Resend Confirmation Email</option>
         <option value=\"ban\">Ban</option>
         </select>
         </td>";
@@ -198,7 +199,7 @@ function draw_user_viewer() {
 
 # If we recieved a list of decisions, process them.
 if (isset($_SESSION["lastAction"])) {
-    if ($_SESSION["lastAction"]["name"] === "ban_users") {
+    if ($_SESSION["lastAction"]["name"] === "modify_users") {
         $reqResult = $_SESSION["lastAction"]["ret"];
     }
     unset($_SESSION["lastAction"]);
@@ -219,7 +220,7 @@ if (isset($reqResult)) {
         echo "<p>Sorry, $reqResult Please try again later</p>";
     } else {
         echo "<p>";
-        echo "Successfully banned ", $reqResult["banned"], " users.";
+        echo "Successfully banned ", $reqResult["banned"], " users and resent ", $reqResult["resent"], " confirmation emails.";
         if (count($reqResult["errors"]) !== 0) {
             echo "<br>However, the following errors were encountered while processing requests:<br>";
             foreach ($reqResult["errors"] as $error) {

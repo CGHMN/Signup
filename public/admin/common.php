@@ -102,6 +102,39 @@ function print_header($title) {
     echo "</ol></nav></div>";
 }
 
+/*
+Takes the user info as an associative array
+Fields: 
+ * username
+ * email
+ * tunnelIP
+ * presharedKey
+ * routedSubnet
+ * exampleConfig*/
+function send_confirmation_email($user) {
+    # Create the Email contents
+    $body =
+    "Dear {$user["username"]},\r\n" .
+    "Welcome to CGHMN!\r\n" .
+    "Your tunnel IP is {$user["tunnelIP"]},\r\n" .
+    "Your WireGuard Preshared Key is {$user["presharedKey"]},\r\n" . 
+    "And your routed subnet is {$user["routedSubnet"]}.\r\n" .
+    "Here's an example config you can use:\r\n---\r\n" .
+    $user["exampleConfig"] . "\r\n---\r\n" .
+    "If you're not sure how to set up your CGHMN Router,\r\n" .
+    "you can find some beginner-friendly instructions at:\r\n" .
+    "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
+    "If you need help with anything,\r\n" .
+    "feel free to reach out at\r\n" .
+    "contact@cghmn.org";
+
+    $headers =
+    "From: noreply@cghmn.org\r\n" .
+    "Reply-To: contact@cghmn.org\r\n";
+
+    return mail($user["email"], "Welcome to CGHMN!", $body, $headers);
+}
+
 function print_footer() {
     echo "<p>(C) 2025 CGHMN.</p></body></html>";
 }

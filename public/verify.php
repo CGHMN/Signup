@@ -89,6 +89,7 @@ if ($_POST) {
 <html>
     <head>
         <title>CGHMN Email Verification</title>
+        <link rel="stylesheet" href="theme/cghmn.css">
     </head>
     <body>
         <h1>CGHMN Email Verification</h1>

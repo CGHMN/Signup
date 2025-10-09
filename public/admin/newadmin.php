@@ -68,7 +68,7 @@ function verify_and_add() {
 
 if ($_POST) {
     # Make sure that the user has permission to manage admins.
-    if ($_SESSION["permissions"] & $perms["manage-admins"]) {
+    if ($_SESSION["permissions"] & $perm["manage-admins"]) {
         $_SESSION["lastAction"] = array("name" => "create_admin", "ret" => "you are not allowed to do that.");
     } else {
         $_SESSION["lastAction"] = array("name" => "create_admin", "ret" => verify_and_add());

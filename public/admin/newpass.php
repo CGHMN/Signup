@@ -67,6 +67,7 @@ function verify_and_update() {
 
         # Clean up.
         $sqlconn->close();
+        session_regenerate_id();
     }
     # Ignore invalid POST requests.
     return null;

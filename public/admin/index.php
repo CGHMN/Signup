@@ -47,6 +47,7 @@ function verify_login() {
             # Recheck username & permissions every 5 minutes.
             $_SESSION["expires"] = time() + 300;
             $sqlconn->close();
+            session_regenerate_id();
             header("Location: admin.php");
             die();
         } else {

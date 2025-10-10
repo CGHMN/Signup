@@ -35,7 +35,7 @@ Here are the columns:
  * ID:bigint (Primary Key) (Auto-increment)
  * Status:int (Index)
  * Username:varchar(64) (Index)
- * Email:text
+ * Email:text (Index)
  * Pubkey:text
  * Plan:text
  * Hosting:bool (Nullable)

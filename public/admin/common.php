@@ -79,6 +79,7 @@ function check_auth() {
 function print_header($title) {
     $pages = array(
         "Requests" => "admin.php",
+        "Past Reqs" => "past.php",
         "Users" => "users.php",
         "Admins" => "admins.php"
     );

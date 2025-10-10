@@ -259,7 +259,7 @@ function process_requests() {
                     );
 
                     if (send_confirmation_email($email)) {
-                        $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 1 WHERE ID = ?");
+                        $stmt = $sqlconn->prepare("UPDATE Requests SET Status = 1 WHERE ID = ?");
                         $stmt->bind_param("i", $req["ID"]);
                         if ($stmt->execute()) {
                             $retVal["approved"]++;
@@ -268,7 +268,7 @@ function process_requests() {
                     }
                     break;
                 case "reject":
-                    $stmt = $sqlconn->prepare("UPDATE $dbName.Requests SET Status = 2 WHERE ID = ?");
+                    $stmt = $sqlconn->prepare("UPDATE Requests SET Status = 2 WHERE ID = ?");
                     $stmt->bind_param("i", $req["ID"]);
                     if ($stmt->execute()) {
                         $retVal["rejected"]++;

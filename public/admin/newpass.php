@@ -53,7 +53,7 @@ function verify_and_update() {
         $passwordHash = password_hash($_POST["new-pass-1"], PASSWORD_DEFAULT);
         $perms = 0;
         $misc = "{}";
-        $stmt = $sqlconn->prepare("UPDATE $dbName.Admins SET Password = ? WHERE ID = ?");
+        $stmt = $sqlconn->prepare("UPDATE Admins SET Password = ? WHERE ID = ?");
         $stmt->bind_param("si", $passwordHash, $_SESSION["userId"]);
         try {
             if ($stmt->execute()) {

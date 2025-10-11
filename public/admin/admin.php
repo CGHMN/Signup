@@ -180,6 +180,26 @@ function process_requests() {
             $decision = $_POST[$name];
             switch ($decision) {
                 case "approve":
+                    # Add the user to the DB.
+                    $stmt = $sqlconn->prepare("INSERT INTO Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
+                    $stmt->bind_param("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
+                    try {
+                        if (!$stmt->execute()) {
+                            array_push($retVal["errors"], "Failed to add user to the database.");
+                            break;
+                        }
+                    } catch (Exception $e) {
+                        $errno = $sqlconn->errno;
+                        if ($errno === 1169 || $errno === 1062) {
+                            array_push($retVal["errors"], "User already in database.");
+                            break;
+                        }
+                        array_push($retVal["errors"], "Something went wrong adding user to the database: \"{$sqlconn->error}\".");
+                        break;
+                    }
+                    $userID = $stmt->insert_id;
+                    $stmt->close();
+
                     # Build cURL request
                     $apiReq = array(
                         "name" => "Tunnel for Member " . $req["Username"],
@@ -204,26 +224,6 @@ function process_requests() {
                         array_push($retVal["errors"], "The router encountered an unknown error.");
                         break;
                     }
-
-                    # Add the user to the DB.
-                    $stmt = $sqlconn->prepare("INSERT INTO Users (Username, Email, Contact, Contact_Details) VALUES (?, ?, ?, ?)");
-                    $stmt->bind_param("ssss", $req["Username"], $req["Email"], $req["Contact"], $req["Contact_Details"]);
-                    try {
-                        if (!$stmt->execute()) {
-                            array_push($retVal["errors"], "Failed to add user to the database.");
-                            break;
-                        }
-                    } catch (Exception $e) {
-                        $errno = $sqlconn->errno;
-                        if ($errno === 1169 || $errno === 1062) {
-                            array_push($retVal["errors"], "User already in database.");
-                            break;
-                        }
-                        array_push($retVal["errors"], "Something went wrong adding user to the database: \"{$sqlconn->error}\".");
-                        break;
-                    }
-                    $userID = $stmt->insert_id;
-                    $stmt->close();
 
                     # Add the user's WG peer to the DB.
                     $allowedIPs = json_encode($decodedRes["allowed_ips"]);

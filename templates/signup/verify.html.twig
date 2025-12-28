@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}CGHMN Email Verification{% endblock %}
+
+{% block body %}
+
+
+{# TODO: Add some styling. Yuck. #}
+{% for message in app.flashes('notice') %}
+    <p>{{ message }}</p>
+{% endfor %}
+
+{% if not form == null %}
+
+    {{ form(form) }}
+
+{% endif %}
+
+{% endblock %}

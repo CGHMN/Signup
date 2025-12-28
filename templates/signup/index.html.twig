@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}CGHMN Signup Page{% endblock %}
+
+{% block body %}
+
+{{ form_start(form) }}
+
+    {{ form_row(form.username) }}
+    {{ form_row(form.plainPassword) }}
+    {{ form_row(form.email) }}
+    {{ form_row(form.pubKey) }}
+    <a href="https://cghmn.org/sign-up/keygen" target="_blank">I don't have a WireGuard key</a>
+    {{ form_row(form.plan) }}
+    {{ form_row(form.needsHosting) }}
+    {{ form_row(form.hasExperience) }}
+    {{ form_row(form.contactMethod) }}
+    {{ form_row(form.contactDetails) }}
+    {{ form_row(form.submit) }}
+
+{{ form_end(form) }}
+
+{% endblock %}

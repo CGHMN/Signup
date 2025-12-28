@@ -8,6 +8,10 @@ framework:
     #esi: true
     #fragments: true
 
+    profiler:
+        enabled: false
+        collect: false
+
 when@test:
     framework:
         test: true

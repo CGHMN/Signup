@@ -1,0 +1,36 @@
+{% extends 'admin/_base.html.twig' %}
+
+{% block title %}Pending Requests{% endblock %}
+
+{% block body %}
+<h3>Pending Requests</h3>
+{{ form_start(form) }}
+<table>
+    <tr>
+        <th>Username</th>
+        <th>Email Address</th>
+        <th>Plan</th>
+        <th>Needs Hosting?</th>
+        <th>Has Sysadmin Experience?</th>
+        <th>Preferred Contact Method</th>
+        <th>Contact Details</th>
+        <th>Decision</th>
+    </tr>
+    {% for request in form.requests %}
+        <tr>
+            <td>{{ field_value(request.username) }}</td>
+            <td>{{ field_value(request.email) }}</td>
+            <td>{{ field_value(request.plan) }}</td>
+            <td>{{ field_value(request.needsHosting) }}</td>
+            <td>{{ field_value(request.hasExperience) }}</td>
+            <td>{{ field_value(request.contactMethod) }}</td>
+            <td>{{ field_value(request.contactDetails) }}</td>
+            <td>{{ form_widget(request.decision) }}</td>
+        </tr>
+    {% endfor %}
+</table>
+{{ form_row(form.submit) }}
+{{ form_row(form._token) }}
+{{ form_end(form, {render_rest: false}) }}
+
+{% endblock %}

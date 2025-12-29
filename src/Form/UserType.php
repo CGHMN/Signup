@@ -93,10 +93,10 @@ class UserType extends AbstractType
             ->add('contactMethod', ChoiceType::class, [
                 'label' => 'What is you\'re preferred contact method? (If other, please specify below.)',
                 'choices' => [
-                    'Email' => 'email',
-                    'IRC' => 'irc',
-                    'Discord' => 'discord',
-                    'Other' => 'other',
+                    'Email' => 'Email',
+                    'IRC' => 'IRC',
+                    'Discord' => 'Discord',
+                    'Other' => 'Other',
                 ],
                 'constraints' => [
                     new NotBlank(

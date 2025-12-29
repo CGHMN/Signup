@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -55,10 +57,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plan = null;
 
     #[ORM\Column(nullable: true)]
-    private ?bool $needsHosting = null;
+    private ?bool $needsHosting = false;
 
     #[ORM\Column(nullable: true)]
-    private ?bool $hasExperience = null;
+    private ?bool $hasExperience = false;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
@@ -66,6 +68,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $contactDetails = null;
+
+    /**
+     * @var Collection<int, WireguardPeer>
+     */
+    #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'userID', orphanRemoval: true)]
+    private Collection $wireguardPeers;
+
+    public function __construct()
+    {
+        $this->wireguardPeers = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -209,6 +222,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setContactDetails(?string $contactDetails): static
     {
         $this->contactDetails = $contactDetails;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, WireguardPeer>
+     */
+    public function getWireguardPeers(): Collection
+    {
+        return $this->wireguardPeers;
+    }
+
+    public function addWireguardPeer(WireguardPeer $wireguardPeer): static
+    {
+        if (!$this->wireguardPeers->contains($wireguardPeer)) {
+            $this->wireguardPeers->add($wireguardPeer);
+            $wireguardPeer->setUserID($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWireguardPeer(WireguardPeer $wireguardPeer): static
+    {
+        if ($this->wireguardPeers->removeElement($wireguardPeer)) {
+            // set the owning side to null (unless already changed)
+            if ($wireguardPeer->getUserID() === $this) {
+                $wireguardPeer->setUserID(null);
+            }
+        }
 
         return $this;
     }

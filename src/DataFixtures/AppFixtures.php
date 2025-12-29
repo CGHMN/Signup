@@ -17,6 +17,7 @@ class AppFixtures extends Fixture
         $user->setPubKey("xFfymVxpEAaUmTFl238AnkQTnNiyRgsB8MefesqLkVc=");
         $user->setPlan("trollollolloll");
         $user->setRoles(['ROLE_USER_PENDING']);
+        $user->setNeedsHosting(false);
         $user->setContactMethod("Email");
 
         $manager->persist($user);

@@ -18,7 +18,7 @@ use App\Entity\User;
 
 final class SignupController extends AbstractController
 {
-    #[Route('/', name: 'signup')]
+    #[Route('/', name: 'app.signup')]
     public function index(Request $request, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): Response {
         $user = new User;
 
@@ -46,12 +46,12 @@ final class SignupController extends AbstractController
                     "Your verification code is:\r\n" . 
                     $session->get('emailCode') . "\r\n" .
                     "This code expires in 20 minutes.\r\n" .
-                    "If you do not recognize this email, please email {$_ENV['CONTACT_EMAIL']}.", 
+                    "If you do not recognize this email, please email {$this->getParameter('app.contactEmail')}.", 
                 );
             $mailer->send($email);
 
             // Redirect them to the verification page.
-            return $this->redirectToRoute('signup.verify');
+            return $this->redirectToRoute('app.signup.verify');
         }
 
         return $this->render('signup/index.html.twig', [
@@ -59,7 +59,7 @@ final class SignupController extends AbstractController
         ]);
     }
 
-    #[Route('/verify', name: 'signup.verify')]
+    #[Route('/verify', name: 'app.signup.verify')]
     public function verify(Request $request, EntityManagerInterface $manager): Response {
         // Check that there is a pending request in the session.
         $session = $request->getSession();
@@ -95,7 +95,7 @@ final class SignupController extends AbstractController
             }
             
             // Hack to reload the page since I can't get the messages to display properly.
-            return $this->redirectToRoute('signup.verify');
+            return $this->redirectToRoute('app.signup.verify');
         }
 
         return $this->render('signup/verify.html.twig', [

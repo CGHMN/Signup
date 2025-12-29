@@ -1,8 +1,12 @@
-{% extends 'admin/_base.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block title %}Pending Requests{% endblock %}
+{% set title = 'CGHMN Admin Page' %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block body %}
+{% include 'admin/_navbar.html.twig' %}
+
+{# Display the pending approval/rejection form #}
 <h3>Pending Requests</h3>
 {{ form_start(form) }}
 <table>
@@ -16,13 +20,26 @@
         <th>Contact Details</th>
         <th>Decision</th>
     </tr>
+    {# Each request is displayed as a row in the table. #}
     {% for request in form.requests %}
         <tr>
             <td>{{ field_value(request.username) }}</td>
             <td>{{ field_value(request.email) }}</td>
             <td>{{ field_value(request.plan) }}</td>
-            <td>{{ field_value(request.needsHosting) }}</td>
-            <td>{{ field_value(request.hasExperience) }}</td>
+            <td>
+                {% if field_value(request.needsHosting) == true %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </td>
+            <td>
+                {% if field_value(request.hasExperience) == true %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </td>
             <td>{{ field_value(request.contactMethod) }}</td>
             <td>{{ field_value(request.contactDetails) }}</td>
             <td>{{ form_widget(request.decision) }}</td>
@@ -32,5 +49,8 @@
 {{ form_row(form.submit) }}
 {{ form_row(form._token) }}
 {{ form_end(form, {render_rest: false}) }}
+
+{# Display the notice/error list #}
+{% include 'admin/_errors.html.twig' %}
 
 {% endblock %}

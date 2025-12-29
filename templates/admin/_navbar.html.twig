@@ -1,0 +1,19 @@
+{% set pages = [{'name': 'Requests', 'route': 'app.admin'}] %}
+
+<div id="topbar">
+    <h1 id="titlebar">{{ title }}</h1>
+    <nav id="menubar">
+        <ol>
+            {% for page in pages %}
+                {% if not page.route == app.request.attributes.get('_route') %}
+                    <a class="menu-item" href="{{ path(page.route) }}">
+                        <li>{{ page.name }}</li>
+                    </a>
+                {% endif %}
+            {% endfor %}
+            <a class="menu-item" style="float: right;" href="{{ path('app.logout') }}">
+                <li>Log Out</li>
+            </a>
+        </ol>
+    </nav>
+</div>

@@ -18,7 +18,7 @@ class WireguardPeer
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\Column(length: 16)]
+    #[ORM\Column(length: 32)]
     private ?string $tunnelIP = null;
 
     #[ORM\Column]

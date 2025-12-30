@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -13,7 +14,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\UserRepository;
 use App\Entity\Requests;
 use App\Entity\WireguardPeer;
+use App\Entity\User;
 use App\Form\RequestCollectionType;
+use App\Form\UserType;
 
 final class AdminController extends AbstractController
 {
@@ -30,106 +33,168 @@ final class AdminController extends AbstractController
             // Process the requests.
             $usersApproved = 0;
             $usersRejected = 0;
+            $usersDeleted = 0;
             $errors = [];
-            foreach($form->get('requests') as $request) {
+            foreach($form->get('requests') as $signupRequest) {
                 // Get the user
-                $user = $request->getData();
+                $user = $signupRequest->getData();
 
                 // Handle the action
-                if ($request->get('decision')->getData() === 1) {
-                    // Create the new Wireguard Peer
-                    // TODO: Wrap this in a try-catch
-                    try {
-                        $response = $client->request('POST', 
-                            "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
-                                'body' => [
-                                    'name' => "Tunnel for member {$user->getUsername()}",
-                                    'public_key' => $user->getPubKey(),
-                                ],
-                                'headers' => [
-                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                                ],
-                                'timeout' => 5,
-                            ]
-                        );
-                        // Decode the response from the server.
-                        $res = $response->toArray();
-                    } catch (Exception $e) {
-                        // Log the message and continue.
-                        array_push($errors, $e->getMessage());
-                        continue;
-                    }
-                    if (isset($res['message'])) {
-                        // Log the message and continue.
-                        array_push($errors, $res['message']);
-                        continue;
-                    }
+                switch ($signupRequest->get('decision')->getData()) {
+                    case 0:
+                        break;
+                    case 1:
+                        // Create the new Wireguard Peer
+                        // TODO: Wrap this in a try-catch
+                        try {
+                            $response = $client->request('POST', 
+                                "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
+                                    'body' => [
+                                        'name' => "Tunnel for member {$user->getUsername()}",
+                                        'public_key' => $user->getPubKey(),
+                                    ],
+                                    'headers' => [
+                                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                    ],
+                                    'timeout' => 5,
+                                ]
+                            );
+                            // Decode the response from the server.
+                            $res = $response->toArray();
+                        } catch (Exception $e) {
+                            // Log the message and continue.
+                            array_push($errors, $e->getMessage());
+                            continue 2;
+                        }
+                        if (isset($res['message'])) {
+                            // Log the message and continue.
+                            array_push($errors, $res['message']);
+                            continue 2;
+                        }
 
-                    // Set up the new WG peer but don't persist it yet.
-                    $peer = new WireguardPeer();
-                    $peer->setRouterID($res['id']);
-                    $peer->setTunnelIP($res['tunnel_ip']);
-                    $peer->setAllowedIPs($res['allowed_ips']);
-                    $peer->setPubKey($res['public_key']);
-                    $peer->setPresharedKey($res['preshared_key']);
-                    $peer->setUser($user);
+                        // Set up the new WG peer but don't persist it yet.
+                        $peer = new WireguardPeer();
+                        $peer->setRouterID($res['id']);
+                        $peer->setTunnelIP($res['tunnel_ip']);
+                        $peer->setAllowedIPs($res['allowed_ips']);
+                        $peer->setPubKey($res['public_key']);
+                        $peer->setPresharedKey($res['preshared_key']);
+                        $peer->setUser($user);
 
-                    // Get the example config
-                    $config = null;
-                    try {
-                        $response = $client->request('GET',
-                            "{$this->getParameter('app.router')}servers/1/{$res['id']}/config", [
-                                'headers' => [
-                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                                ],
-                                'timeout' => 5,
-                            ]
-                        );
-                        $config = $response->getContent();
-                    } catch (Exception $e) {
-                        // This is bad. One router API request succeeded but not the other.
-                        // Delete the orphaned WG peer and continue.
-                        $response = $client->request('DELETE',
-                            "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
-                                'headers' => [
-                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                                ],
-                                'timeout' => 5,
-                            ]
-                        );
+                        // Get the example config
+                        $config = null;
+                        try {
+                            $response = $client->request('GET',
+                                "{$this->getParameter('app.router')}servers/1/{$res['id']}/config", [
+                                    'headers' => [
+                                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                    ],
+                                    'timeout' => 5,
+                                ]
+                            );
+                            $config = $response->getContent();
+                        } catch (Exception $e) {
+                            // This is bad. One router API request succeeded but not the other.
+                            // Delete the orphaned WG peer and continue.
+                            $response = $client->request('DELETE',
+                                "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
+                                    'headers' => [
+                                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                    ],
+                                    'timeout' => 5,
+                                ]
+                            );
 
-                        // Log the message and continue.
-                        array_push($errors, $e->getMessage());
-                        continue;
-                    }
+                            // Log the message and continue.
+                            array_push($errors, $e->getMessage());
+                            continue 2;
+                        }
 
-                    // Everything has succeeded. Persist the peer, approve the user, 
-                    // and let them know they were approved.
-                    $manager->persist($peer);
-                    $user->setRoles(['ROLE_USER_APPROVED']);
-                    $usersApproved++;
-                    sendConfirmationEmail($user, $peer, $config, $mailer);
-                } else if ($request->get('decision')->getData() === 2) {
-                    $user->setRoles(['ROLE_USER_REJECTED']);
-                    $usersRejected++;
-                    // TODO: Send user an email if they've been rejected?
-                    // I fear that if we let bad actors know when they were rejected,
-                    // they'll immediately turn around and flood us with requests,
-                    // vs assuming we're just taking a while to get around to approving it.
+                        // Everything has succeeded. Persist the peer, approve the user, 
+                        // and let them know they were approved.
+                        $manager->persist($peer);
+                        $user->setRoles(['ROLE_USER_APPROVED']);
+                        $usersApproved++;
+                        sendConfirmationEmail($user, $peer, $config, $mailer);
+                        break;
+                    case 2:
+                        $user->setRoles(['ROLE_USER_REJECTED']);
+                        $usersRejected++;
+                        // TODO: Send user an email if they've been rejected?
+                        // I fear that if we let bad actors know when they were rejected,
+                        // they'll immediately turn around and flood us with requests,
+                        // vs assuming we're just taking a while to get around to approving it.
+                        break;
+                    case 3:
+                        $manager->remove($user);
+                        $usersDeleted++;
+                        break;
+                    default:
+                        throw new \Exception("How'd we get here?!");
                 }
             }
             $manager->flush();
-            $this->addFlash('notice', "Successfully approved $usersApproved requests and rejected $usersRejected requests.");
+            $this->addFlash('notice', 
+                "Successfully approved $usersApproved, requests, " .
+                "rejected $usersRejected requests, " . 
+                "and deleted $usersDeleted requests."
+            );
             if (count($errors) > 0) {
-                $this->addFlash('notice', 'However, the following errors were encountered while attempting to process requests:');
+                $this->addFlash('notice', 
+                    'However, the following errors were encountered ' .
+                    'while attempting to process requests:'
+                );
                 foreach($errors as $error) {
                     $this->addFlash('error', $error);
                 }
             }
-            return $this->redirectToRoute('app.admin');
+            return $this->redirect($request->getUri());
         }
 
         return $this->render('admin/index.html.twig', [
+            'form' => $form,
+        ]);
+    }
+    
+    // Admin management page (Create/Delete admins, change your password, delete your account.)
+    #[Route('/admin/manage', name: 'app.admin.manage')]
+    public function adminMgmt() {
+        return $this->render('admin/manage.html.twig');
+    }
+
+    // Creation page for new admins
+    #[Route('/admin/new', name: 'app.admin.new')]
+    public function newAdmin(Request $request, EntityManagerInterface $manager,
+        UserPasswordHasherInterface $passwordHasher) {
+        $this->denyAccessUnlessGranted('ROLE_CREATE_ADMINS');
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        // This user will become the new admin.
+        $newAdmin = new User();
+        $form = $this->createForm(UserType::class, $newAdmin, [
+            'type' => 'admin',
+            'methodLabel' => 'What is their preferred contact method?',
+            'detailsLabel' => 'How can we reach them?',
+        ]);
+        $form->handleRequest($request);
+
+        // Create the admin.
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Set whether the admin can create new users or not.
+            if ($form->get('super')->getData()) {
+                $newAdmin->setRoles(['ROLE_SUPER_ADMIN']);
+            } else {
+                $newAdmin->setRoles(['ROLE_ADMIN']);
+            }
+
+            $newAdmin->setPassword($passwordHasher->hashPassword($newAdmin, $form->get('plainPassword')->getData()));
+            $manager->persist($newAdmin);
+            $manager->flush();
+            $this->addFlash('notice', "Admin {$newAdmin->getUsername()} created successfully.");
+            $this->addFlash('notice', 'Please tell them to change their password as soon as possible!');
+            return $this->redirect($request->getUri());
+        }
+
+        return $this->render('admin/new.html.twig', [
             'form' => $form,
         ]);
     }

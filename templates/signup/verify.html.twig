@@ -6,11 +6,9 @@
 
 
 {# TODO: Add some styling. Yuck. #}
-{% for message in app.flashes('notice') %}
-    <p>{{ message }}</p>
-{% endfor %}
+{% include '_errors.html.twig' %}
 
-{% if not form == null %}
+{% if form %}
 
     {{ form(form) }}
 

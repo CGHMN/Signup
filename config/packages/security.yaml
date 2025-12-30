@@ -12,6 +12,9 @@ security:
                 property: username
         # used to reload user from session & other features (e.g. switch_user)
 
+    role_hierarchy:
+        ROLE_SUPER_ADMIN: [ ROLE_ADMIN, ROLE_CREATE_ADMINS ]
+
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
@@ -26,7 +29,7 @@ security:
                 default_target_path: app.next
                 enable_csrf: true
             logout:
-                path: logout
+                path: app.logout
                 # where to redirect after logout
                 # target: app_any_route
             remember_me:
@@ -41,7 +44,9 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN_APPROVED }
+        - { path: ^/admin/new, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/profile/password, roles: [ROLE_ADMIN, ROLE_USER_APPROVED, ROLE_USER_PENDING] }
         - { path: ^/profile, roles: [ROLE_USER_APPROVED, ROLE_USER_PENDING] }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

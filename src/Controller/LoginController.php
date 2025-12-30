@@ -28,10 +28,14 @@ class LoginController extends AbstractController
     #[Route(path: '/next', name: 'app.next')]
     public function next(): Response {
         // Redirect admins to the admin page.
-        if ($this->isGranted('ROLE_ADMIN_APPROVED')) {
+        if ($this->isGranted('ROLE_ADMIN')) {
             return $this->redirectToRoute('app.admin');
         }
-        return $this->redirectToRoute('app.user.profile');
+        if ($this->isGranted('ROLE_USER_APPROVED')) {
+            return $this->redirectToRoute('app.user.profile');
+        }
+        // TODO: Some sort of banned/access denied page?
+        return $this->redirectToRoute('app.logout');
     }
 
     #[Route(path: '/logout', name: 'app.logout')]

@@ -37,7 +37,7 @@ class AppFixtures extends Fixture
         $user->setUsername("loganius");
         $user->setPassword(password_hash("very-secure", PASSWORD_BCRYPT));
         $user->setEmail("loganisamazing@outlook.com");
-        $user->setRoles(['ROLE_ADMIN_APPROVED']);
+        $user->setRoles(['ROLE_SUPER_ADMIN']);
         $user->setContactMethod("Email");
 
         $manager->persist($user);

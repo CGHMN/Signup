@@ -72,7 +72,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, WireguardPeer>
      */
-    #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'userID', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'userID', orphanRemoval: false)]
     private Collection $wireguardPeers;
 
     public function __construct()

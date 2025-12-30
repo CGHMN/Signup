@@ -11,10 +11,11 @@
         {% endfor %}
     </p>
 {% endif %}
+
 {% if app.session.flashbag.peek('error') %}
 <ul>
     {% for message in app.flashes('error') %}
-    <li>{{ message }}</li>
+        <li>{{ message }}</li>
     {% endfor %}
 </ul>
 {% endif %}

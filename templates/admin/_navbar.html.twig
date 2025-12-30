@@ -1,11 +1,14 @@
-{% set pages = [{'name': 'Requests', 'route': 'app.admin'}] %}
+{% set pages = [
+    {'name': 'Requests', 'route': 'app.admin'},
+    {'name': 'Admin Management', 'route': 'app.admin.manage'},
+] %}
 
 <div id="topbar">
     <h1 id="titlebar">{{ title }}</h1>
     <nav id="menubar">
         <ol>
             {% for page in pages %}
-                {% if not page.route == app.request.attributes.get('_route') %}
+                {% if page.route != app.request.attributes.get('_route') %}
                     <a class="menu-item" href="{{ path(page.route) }}">
                         <li>{{ page.name }}</li>
                     </a>

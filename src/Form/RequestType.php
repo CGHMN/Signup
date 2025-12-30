@@ -50,6 +50,7 @@ class RequestType extends AbstractType
                     'Do Nothing' => 0,
                     'Approve' => 1,
                     'Reject' => 2,
+                    'Delete' => 3,
                 ],
                 'constraints' => [
                     new NotBlank(),

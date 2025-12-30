@@ -23,7 +23,9 @@ final class SignupController extends AbstractController
         $user = new User;
 
         // Create & handle the signup form
-        $form = $this->createForm(UserType::class, $user);
+        $form = $this->createForm(UserType::class, $user, [
+            'type' => 'user',
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -36,6 +38,7 @@ final class SignupController extends AbstractController
             $session->set('pendingRequest', $user);
             $session->set('emailCode', bin2hex(random_bytes(5)));
             $session->set('expires', time() + 1200);
+            $session->set('submitted', false);
 
             // Send them an email with their verification code.
             $email = (new Email())
@@ -69,11 +72,22 @@ final class SignupController extends AbstractController
             $session->get('expires') === null ||
             $session->get('expires') < time()) {
             $session->invalidate();
-            $this->addFlash('notice', 'Sorry, we could not find your request. Please try again.');
+            $this->addFlash('notice', 'Sorry, we couldn\'t find your request. Please try again.');
             return $this->render('signup/verify.html.twig', [
                 'form' => null,
             ]);
         }
+
+        // If the request has already been sucessfully submitted, 
+        // kill the session and print a success message.
+        if ($session->get('submitted')) {
+            $session->invalidate();
+            $this->addFlash('notice', "Your request was sucessfully submitted.\nIt will be reviewed by an admin shortly.");
+            return $this->render('signup/verify.html.twig', [
+                'form' => null,
+            ]);
+        }
+
         $emailCode = new EmailCode;
 
         // Create & handle the email code form
@@ -87,15 +101,12 @@ final class SignupController extends AbstractController
                 $user = $session->get('pendingRequest');
                 $manager->persist($user);
                 $manager->flush();
-                // Kill the session
-                $session->invalidate();
-                $this->addFlash('notice', 'Your request was sucessfully submitted. It will be reviewed by an admin shortly.');
+                // State that we successfully submitted the request.
+                $session->set('submitted', true);
             } else {
                 $this->addFlash('notice', 'Your email could not be verified. Please try again.');
             }
-            
-            // Hack to reload the page since I can't get the messages to display properly.
-            return $this->redirectToRoute('app.signup.verify');
+            return $this->redirect($request->getUri());
         }
 
         return $this->render('signup/verify.html.twig', [

@@ -72,7 +72,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, WireguardPeer>
      */
-    #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'userID', orphanRemoval: false)]
+    #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'user', orphanRemoval: false)]
     private Collection $wireguardPeers;
 
     public function __construct()
@@ -238,7 +238,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->wireguardPeers->contains($wireguardPeer)) {
             $this->wireguardPeers->add($wireguardPeer);
-            $wireguardPeer->setUserID($this);
+            $wireguardPeer->setUser($this);
         }
 
         return $this;
@@ -248,8 +248,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->wireguardPeers->removeElement($wireguardPeer)) {
             // set the owning side to null (unless already changed)
-            if ($wireguardPeer->getUserID() === $this) {
-                $wireguardPeer->setUserID(null);
+            if ($wireguardPeer->getUser() === $this) {
+                $wireguardPeer->setUser(null);
             }
         }
 

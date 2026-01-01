@@ -14,44 +14,10 @@ class RequestType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('username', TextType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('email', TextType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('plan', TextType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('needsHosting', CheckboxType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('hasExperience', CheckboxType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('contactMethod', TextType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('contactDetails', TextType::class, [
-                'disabled' => true,
-                'label' => false,
-            ])
-            ->add('decision', ChoiceType::class, [
+        $builder->add('decision', ChoiceType::class, [
                 'label' => false,
                 'mapped' => false,
-                'choices' => [
-                    'Do Nothing' => 0,
-                    'Approve' => 1,
-                    'Reject' => 2,
-                    'Delete' => 3,
-                ],
+                'choices' => $options['actions'],
                 'constraints' => [
                     new NotBlank(),
                 ],
@@ -63,6 +29,12 @@ class RequestType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'actions' => [
+                'Do Nothing' => 0,
+                'Approve' => 1,
+                'Reject' => 2,
+                'Delete' => 3,
+            ],
         ]);
     }
 }

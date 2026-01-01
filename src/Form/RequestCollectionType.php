@@ -16,7 +16,7 @@ class RequestCollectionType extends AbstractType {
         $builder
             ->add('requests', CollectionType::class, [
                 'entry_type' => RequestType::class,
-                'entry_options' => ['label' => false],
+                'entry_options' => ['label' => false, 'actions' => $options['actions']],
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Go!',
@@ -27,6 +27,12 @@ class RequestCollectionType extends AbstractType {
     public function configureOptions(OptionsResolver $resolver): void {
         $resolver->setDefaults([
             'data_class' => Requests::class,
+            'actions' => [
+                'Do Nothing' => 0,
+                'Approve' => 1,
+                'Reject' => 2,
+                'Delete' => 3,
+            ],
         ]);
     }
 }

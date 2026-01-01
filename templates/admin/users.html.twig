@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% set title = 'CGHMN Admin Page' %}
+{% set title = 'User Management' %}
 {% block title %}{{ title }}{% endblock %}
 
 {% block body %}
 {% include 'admin/_navbar.html.twig' %}
 
 {# Display the pending approval/rejection form #}
-<h3 class="form-header">Pending Requests</h3>
+<h3 class="form-header">Users</h3>
 {{ form_start(form) }}
 <table class="data-table">
     <tr>
@@ -18,12 +18,16 @@
         <th>Has Sysadmin Experience?</th>
         <th>Preferred Contact Method</th>
         <th>Contact Details</th>
-        <th>Decision</th>
+        <th>Action</th>
     </tr>
     {# Each request is displayed as a row in the table. #}
     {% for request in form.requests %}
         <tr>
-            <td>{{ request.vars.data.username }}</td>
+            <td>
+                <a href="{{ path(name = 'app.admin.users.edit', parameters = {id: request.vars.data.id}, relative = false) }}">
+                    {{ request.vars.data.username }}
+                </a>
+            </td>
             <td>{{ request.vars.data.email }}</td>
             <td>{{ request.vars.data.plan }}</td>
             <td>

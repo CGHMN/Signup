@@ -17,6 +17,7 @@ use App\Entity\WireguardPeer;
 use App\Entity\User;
 use App\Form\RequestCollectionType;
 use App\Form\UserType;
+use App\Form\WireguardPeerType;
 
 final class AdminController extends AbstractController
 {
@@ -25,8 +26,17 @@ final class AdminController extends AbstractController
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
         MailerInterface $mailer): Response {
         // Print out the list of requests.
-        $requests = new Requests($userRepository);
+        $requests = new Requests($userRepository, 'ROLE_USER_PENDING');
+        
+        // If there are no pending requests, say so and return immediately.
         $form = $this->createForm(RequestCollectionType::class, $requests);
+        if ($requests->getRequests()->count() === 0) {
+            $this->addFlash('notice', 'No requests were found! :D');
+            return $this->render('admin/index.html.twig', [
+                'form' => $form,
+            ]);
+        }
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -45,27 +55,26 @@ final class AdminController extends AbstractController
                         break;
                     case 1:
                         // Create the new Wireguard Peer
-                        // TODO: Wrap this in a try-catch
-                        try {
-                            $response = $client->request('POST', 
-                                "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
-                                    'body' => [
-                                        'name' => "Tunnel for member {$user->getUsername()}",
-                                        'public_key' => $user->getPubKey(),
-                                    ],
-                                    'headers' => [
-                                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                                    ],
-                                    'timeout' => 5,
-                                ]
-                            );
-                            // Decode the response from the server.
-                            $res = $response->toArray();
-                        } catch (Exception $e) {
+                        $response = $httpClient->request('POST', 
+                            "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
+                                'body' => [
+                                    'name' => "Tunnel for member {$user->getUsername()}",
+                                    'public_key' => $user->getPubKey(),
+                                ],
+                                'headers' => [
+                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                ],
+                                'timeout' => 5,
+                            ]
+                        );
+                        // Check for errors.
+                        if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // Log the message and continue.
-                            array_push($errors, $e->getMessage());
+                            array_push($errors, $response->getHeaders(false)['status'][0]);
                             continue 2;
                         }
+                        // Decode the response from the server.
+                        $res = $response->toArray();
                         if (isset($res['message'])) {
                             // Log the message and continue.
                             array_push($errors, $res['message']);
@@ -83,20 +92,19 @@ final class AdminController extends AbstractController
 
                         // Get the example config
                         $config = null;
-                        try {
-                            $response = $client->request('GET',
-                                "{$this->getParameter('app.router')}servers/1/{$res['id']}/config", [
-                                    'headers' => [
-                                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                                    ],
-                                    'timeout' => 5,
-                                ]
-                            );
-                            $config = $response->getContent();
-                        } catch (Exception $e) {
+                        $response = $httpClient->request('GET',
+                            "{$this->getParameter('app.router')}servers/1/peers/{$res['id']}/config", [
+                                'headers' => [
+                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                ],
+                                'timeout' => 5,
+                            ]
+                        );
+                        if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // This is bad. One router API request succeeded but not the other.
                             // Delete the orphaned WG peer and continue.
-                            $response = $client->request('DELETE',
+                            $message = $response->getHeaders(false)['status'][0];
+                            $response = $httpClient->request('DELETE',
                                 "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
                                     'headers' => [
                                         'X-API-Key' => $this->getParameter('app.rtrApiKey'),
@@ -105,17 +113,23 @@ final class AdminController extends AbstractController
                                 ]
                             );
 
+                            // If this fails... we in deeeep trouble.
+                            if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                                dd($response);
+                            }
+
                             // Log the message and continue.
-                            array_push($errors, $e->getMessage());
+                            array_push($errors, $message);
                             continue 2;
                         }
+                        $config = $response->getContent();
 
                         // Everything has succeeded. Persist the peer, approve the user, 
                         // and let them know they were approved.
                         $manager->persist($peer);
                         $user->setRoles(['ROLE_USER_APPROVED']);
                         $usersApproved++;
-                        sendConfirmationEmail($user, $peer, $config, $mailer);
+                        $this->sendConfirmationEmail($user, $peer, $config, $mailer);
                         break;
                     case 2:
                         $user->setRoles(['ROLE_USER_REJECTED']);
@@ -199,15 +213,142 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    // Page for managing users. (Banning/Deleting/Etc)
+    #[Route('/admin/users', name: 'app.admin.users')]
+    public function users(Request $request, UserRepository $userRepository, 
+        EntityManagerInterface $manager, HttpClientInterface $httpClient,
+        MailerInterface $mailer): Response {
+        // Print out the list of users.
+        $requests = new Requests($userRepository, 'ROLE_USER_APPROVED');
+        $form = $this->createForm(RequestCollectionType::class, $requests, [
+            'actions' => [
+                'Do Nothing' => 0,
+                'Resend Confirmation Email' => 1,
+                'Ban' => 2,
+                'Delete' => 3
+            ],
+        ]);
+        $form->handleRequest($request);
+
+        // Execute the requested actions.
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Process the requests.
+            $emailsSent = 0;
+            $usersBanned = 0;
+            $usersDeleted = 0;
+            $errors = [];
+            foreach($form->get('requests') as $userRaw) {
+                // Get the user
+                $user = $userRaw->getData();
+                switch ($userRaw->get('decision')->getData()) {
+                    case 0:
+                        break;
+                    case 1:
+                        // Resend the user's confirmation email.
+                        $peer = $user->getWireguardPeers()[0];
+                        // Get the example config
+                        $config = null;
+                        $response = $httpClient->request('GET',
+                            "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}/config", [
+                                'headers' => [
+                                    'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                                ],
+                                'timeout' => 5,
+                            ]
+                        );
+                        // Make sure the request succeeded.
+                        if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                            // Log the errors and continue.
+                            array_push($errors, $response->getHeaders(false)['status'][0]);
+                            continue 2;
+                        }
+                        $config = $response->getContent();
+
+                        // Send the confirmation email.
+                        $this->sendConfirmationEmail($user, $peer, $config, $mailer);
+                        $emailsSent++;
+                        break;
+                    case 2:
+                        // Delete the users Wireguard peers
+                        array_merge($errors, $this->cleanUser($user, $httpClient, $manager));
+                        // Give the user the ROLE_USER_BANNED role.
+                        // We don't delete their info to prevent them from ever signing up again.
+                        $user->setRoles(['ROLE_USER_BANNED']);
+                        $usersBanned++;
+                        break;
+                    case 3:
+                        // This is the same as banning a user except they can sign up again.
+                        array_merge($errors, $this->cleanUser($user, $httpClient, $manager));
+                        $manager->remove($user);
+                        $usersDeleted++;
+                        break;
+                }
+            }
+            $manager->flush();
+
+            // Reload the Wireguard interface (but only if we need to)
+            if ($usersBanned > 0 || $usersDeleted > 0) {
+                // Don't care about the response.
+                $response = $httpClient('POST', 
+                    "{$this->getParameter('app.router')}servers/1/reload", [
+                        'headers' => [
+                            'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                        ],
+                        'timeout' => 5,
+                    ]
+                );
+            }
+
+            $this->addFlash('notice', 
+                "Successfully resent $emailsSent confirmation emails, " .
+                "banned $usersBanned users, " . 
+                "and deleted $usersDeleted users."
+            );
+            if (count($errors) > 0) {
+                $this->addFlash('notice', 
+                    'However, the following errors were encountered ' .
+                    'while attempting to execute the requested actions:'
+                );
+                foreach($errors as $error) {
+                    $this->addFlash('error', $error);
+                }
+            }
+            return $this->redirect($request->getUri());
+        }
+
+        return $this->render('admin/users.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    // More in depth user management.
+    #[Route('/admin/users/{id<\d+>}', name: 'app.admin.users.edit')]
+    public function editUser(User $user, Request $request,
+        EntityManagerInterface $manager, HttpClientInterface $httpClient) {
+        // Create a form to edit the existing user data (the Wireguard peers).
+        $userForm = $this->createForm(UserType::class, $user, [
+            'update' => 'peers'
+        ]);
+
+        // Create a form to create a new Wireguard peer.
+        $peer = new WireguardPeer();
+        $peerForm = $this->createForm(WireguardPeerType::class, $peer);
+
+        return $this->render('admin/edit.html.twig', [
+            'userForm' => $userForm,
+            'peerForm' => $peerForm,
+        ]);
+    }
+
     private function sendConfirmationEmail(User $user, WireguardPeer $peer, 
-        string $exampleConfig, MailerInterface $mailer) {
+        string $exampleConfig, MailerInterface $mailer): void {
         // Create the email contents
         $body =
             "Dear {$user->getUsername()},\r\n" .
             "Welcome to CGHMN!\r\n" .
             "Your tunnel IP is {$peer->getTunnelIP()},\r\n" .
             "Your WireGuard Preshared Key is {$peer->getPresharedKey()},\r\n" . 
-            "And your routed subnet is {$peer->getAllowedIPs()[0]}.\r\n" .
+            "And your routed subnet is {$peer->getAllowedIPs()[0]['cidr']}.\r\n" .
             "Here's an example config you can use:\r\n---\r\n" .
             "$exampleConfig\r\n---\r\n" .
             "If you're not sure how to set up your CGHMN Router,\r\n" .
@@ -221,5 +362,53 @@ final class AdminController extends AbstractController
             ->subject("Welcome to CGHMN!")
             ->text($body);
         $mailer->send($email);
+    }
+
+    // Helper function to clean a user (delete their Wireguard peers)
+    private function cleanUser(User $user, HttpClientInterface $httpClient,
+        EntityManagerInterface $manager): array {
+        // Log any errors we experience.
+        $errors = [];
+        // Get their Wireguard peers
+        $peers = $user->getWireguardPeers();
+
+        // Delete them.
+        foreach ($peers as $peer) {
+            // Delete the Wireguard peer from the router.
+            $response = $httpClient->request('DELETE',
+                "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
+                    'headers' => [
+                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                    ],
+                    'timeout' => 5,
+                ]
+            );
+
+            // Check for errors.
+            if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                // Log the message and continue.
+                array_push($errors, $response->getHeaders(false)['status'][0]);
+                continue;
+            }
+
+            // If we didn't encounter any errors, delete the peer on our end.
+            $manager->remove($peer);
+        }
+
+        // We'll give them the courtesy of deleting the info we don't use
+        // to identify users.
+        // (ie: passwords, personal info)
+        // May change this later, depending on how we want to handle unbans.
+        $user->setPassword("none");
+        $user->setPlan("");
+        $user->setNeedsHosting(false);
+        $user->setHasExperience(false);
+        $user->setContactMethod("none");
+        $user->setContactDetails("");
+        $user->setPubKey("0000000000000000000000000000000000000000000=");
+
+        // Flush the entity manager.
+        $manager->flush();
+        return $errors;
     }
 }

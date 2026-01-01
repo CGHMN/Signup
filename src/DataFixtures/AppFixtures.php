@@ -13,7 +13,7 @@ class AppFixtures extends Fixture
         $user = new User;
         $user->setUsername("Testing");
         $user->setPassword(password_hash("12345", PASSWORD_BCRYPT));
-        $user->setEmail("test@test.com");
+        $user->setEmail("basiclogan@outlook.com");
         $user->setPubKey("xFfymVxpEAaUmTFl238AnkQTnNiyRgsB8MefesqLkVc=");
         $user->setPlan("trollollolloll");
         $user->setRoles(['ROLE_USER_PENDING']);

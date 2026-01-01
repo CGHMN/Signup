@@ -1,18 +1,21 @@
 {% set pages = [
     {'name': 'Requests', 'route': 'app.admin'},
-    {'name': 'Admin Management', 'route': 'app.admin.manage'},
+    {'name': 'Users', 'route': 'app.admin.users'},
+    {'name': 'Admin', 'route': 'app.admin.manage'},
 ] %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/theme/admin.css">
+{% endblock %}
 
 <div id="topbar">
     <h1 id="titlebar">{{ title }}</h1>
     <nav id="menubar">
         <ol>
             {% for page in pages %}
-                {% if page.route != app.request.attributes.get('_route') %}
-                    <a class="menu-item" href="{{ path(page.route) }}">
-                        <li>{{ page.name }}</li>
-                    </a>
-                {% endif %}
+                <a class="menu-item" href="{{ path(page.route) }}">
+                    <li>{{ page.name }}</li>
+                </a>
             {% endfor %}
             <a class="menu-item" style="float: right;" href="{{ path('app.logout') }}">
                 <li>Log Out</li>

@@ -11,11 +11,11 @@ use App\Entity\User;
 class Requests {
     protected Collection $requests;
 
-    public function __construct(UserRepository $userRepository) {
+    public function __construct(UserRepository $userRepository, string $type) {
         $this->requests = new ArrayCollection();
         $users = $userRepository->findAll();
         foreach ($users as $user) {
-            if (in_array('ROLE_USER_PENDING', $user->getRoles(), true)) {
+            if (in_array($type, $user->getRoles(), true)) {
                 $this->requests->add($user);
             }
         }

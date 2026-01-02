@@ -50,6 +50,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^[a-z0-9\+\/]{43}=$/i', message: 'You must enter a valid WireGuard public key.')]
     private ?string $pubKey = null;
 

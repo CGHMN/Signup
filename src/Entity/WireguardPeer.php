@@ -5,8 +5,12 @@ namespace App\Entity;
 use App\Repository\WireguardPeerRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validatior\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WireguardPeerRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_PUBKEY', fields: ['pubKey'])]
+#[UniqueEntity(fields: ['pubKey'], message: 'There is already a Wireguard peer with this public key.')]
 class WireguardPeer
 {
     #[ORM\Id]
@@ -16,21 +20,29 @@ class WireguardPeer
 
     #[ORM\ManyToOne(inversedBy: 'wireguardPeers')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotBlank]
     private ?User $user = null;
 
     #[ORM\Column(length: 32)]
+    #[Assert\NotBlank]
     private ?string $tunnelIP = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank]
     private array $allowedIPs = [];
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    #[Assert\Regex(pattern: '/^[a-z0-9\+\/]{43}=$/i', message: 'You must enter a valid WireGuard public key.')]
     private ?string $pubKey = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    #[Assert\Regex(pattern: '/^[a-z0-9\+\/]{43}=$/i', message: 'An invalid preshared key should not be possible...')]
     private ?string $presharedKey = null;
 
     #[ORM\Column(type: Types::BIGINT)]
+    #[Assert\NotBlank]
     private ?string $routerID = null;
 
     public function getId(): ?int

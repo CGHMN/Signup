@@ -321,22 +321,16 @@ final class AdminController extends AbstractController
         ]);
     }
 
-    // More in depth user management.
-    #[Route('/admin/users/{id<\d+>}', name: 'app.admin.users.edit')]
-    public function editUser(User $user, Request $request,
-        EntityManagerInterface $manager, HttpClientInterface $httpClient) {
-        // Create a form to edit the existing user data (the Wireguard peers).
-        $userForm = $this->createForm(UserType::class, $user, [
-            'update' => 'peers'
-        ]);
+    // More in depth user viewing.
+    #[Route('/admin/users/{id<\d+>}', name: 'app.admin.users.view')]
+    public function editUser(User $user) {
+        // This page is only for normal users.
+        if (!in_array('ROLE_USER_APPROVED', $user->getRoles())) {
+            return $this->redirectToRoute('app.admin');
+        }
 
-        // Create a form to create a new Wireguard peer.
-        $peer = new WireguardPeer();
-        $peerForm = $this->createForm(WireguardPeerType::class, $peer);
-
-        return $this->render('admin/edit.html.twig', [
-            'userForm' => $userForm,
-            'peerForm' => $peerForm,
+        return $this->render('admin/view.html.twig', [
+            'user' => $user,
         ]);
     }
 
@@ -362,6 +356,71 @@ final class AdminController extends AbstractController
             ->subject("Welcome to CGHMN!")
             ->text($body);
         $mailer->send($email);
+    }
+
+    // Page for managing admins (Ban/Delete/etc)
+    #[Route('/admin/admins', name: 'app.admin.admins')]
+    public function admins(Request $request, UserRepository $userRepository, 
+        EntityManagerInterface $manager, HttpClientInterface $httpClient,
+        MailerInterface $mailer): Response {
+        $this->denyAccessUnlessGranted('ROLE_CREATE_ADMINS');
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        // Print out the list of admins.
+        $requests = new Requests($userRepository, 'ROLE_ADMIN');
+        $form = $this->createForm(RequestCollectionType::class, $requests, [
+            'actions' => [
+                'Do Nothing' => 0,
+                'Ban' => 1,
+                'Delete' => 2
+            ],
+        ]);
+        $form->handleRequest($request);
+
+        // Execute the requested actions.
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Process the requests.
+            $usersBanned = 0;
+            $usersDeleted = 0;
+            $errors = [];
+            foreach($form->get('requests') as $userRaw) {
+                // Get the user
+                $user = $userRaw->getData();
+                switch ($userRaw->get('decision')->getData()) {
+                    case 0:
+                        break;
+                    case 1:
+                        // Give the user the ROLE_USER_BANNED role.
+                        // We don't delete their info to prevent them from ever signing up again.
+                        $user->setRoles(['ROLE_USER_BANNED']);
+                        $usersBanned++;
+                        break;
+                    case 2:
+                        $manager->remove($user);
+                        $usersDeleted++;
+                        break;
+                }
+            }
+            $manager->flush();
+
+            $this->addFlash('notice', 
+                "Successfully banned $usersBanned admins, " . 
+                "and deleted $usersDeleted admins."
+            );
+            if (count($errors) > 0) {
+                $this->addFlash('notice', 
+                    'However, the following errors were encountered ' .
+                    'while attempting to execute the requested actions:'
+                );
+                foreach($errors as $error) {
+                    $this->addFlash('error', $error);
+                }
+            }
+            return $this->redirect($request->getUri());
+        }
+
+        return $this->render('admin/admins.html.twig', [
+            'form' => $form,
+        ]);
     }
 
     // Helper function to clean a user (delete their Wireguard peers)

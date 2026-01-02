@@ -1,21 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% set title = 'User Management' %}
+{% set title = 'Admin Management' %}
 {% block title %}{{ title }}{% endblock %}
 
 {% block body %}
 {% include 'admin/_navbar.html.twig' %}
 
 {# Display the pending approval/rejection form #}
-<h3 class="form-header">Users</h3>
+<h3 class="form-header">Admins</h3>
 {{ form_start(form) }}
 <table class="data-table">
     <tr>
         <th>Username</th>
         <th>Email Address</th>
-        <th>Plan</th>
-        <th>Needs Hosting?</th>
-        <th>Has Sysadmin Experience?</th>
+        <th>Can Create Admins?</th>
         <th>Preferred Contact Method</th>
         <th>Contact Details</th>
         <th>Action</th>
@@ -23,22 +21,10 @@
     {# Each request is displayed as a row in the table. #}
     {% for request in form.requests %}
         <tr>
-            <td>
-                <a href="{{ path(name = 'app.admin.users.view', parameters = {id: request.vars.data.id}, relative = false) }}">
-                    {{ request.vars.data.username }}
-                </a>
-            </td>
+            <td>{{ request.vars.data.username }}</td>
             <td>{{ request.vars.data.email }}</td>
-            <td>{{ request.vars.data.plan }}</td>
             <td>
-                {% if request.vars.data.needsHosting %}
-                    Yes
-                {% else %}
-                    No
-                {% endif %}
-            </td>
-            <td>
-                {% if request.vars.data.hasExperience %}
+                {% if 'ROLE_CREATE_ADMINS' in request.vars.data.roles %}
                     Yes
                 {% else %}
                     No

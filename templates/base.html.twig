@@ -12,12 +12,12 @@
     </head>
     <body>
         {% block body %}{% endblock %}
-        <div style="margin: 20px 5px 0 5px;">
+        <div class="room">
             {% if app.user %}
                 <p>You are logged in as {{ app.user.userIdentifier }}.
                 <a href="{{ logout_path() }}">Logout</a>
             {% endif %}
-            <p>Copyright (C) 2025 CGHMN. License TBD</p>
+            <p>Copyright (C) 2025-2026 CGHMN. License TBD</p>
         </div>
     </body>
 </html>

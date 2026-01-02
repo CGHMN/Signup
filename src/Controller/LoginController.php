@@ -32,7 +32,7 @@ class LoginController extends AbstractController
             return $this->redirectToRoute('app.admin');
         }
         if ($this->isGranted('ROLE_USER_APPROVED')) {
-            return $this->redirectToRoute('app.user.profile');
+            return $this->redirectToRoute('app.profile');
         }
         // TODO: Some sort of banned/access denied page?
         return $this->redirectToRoute('app.logout');

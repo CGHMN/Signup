@@ -113,4 +113,9 @@ final class SignupController extends AbstractController
             'form' => $form,
         ]);
     }
+
+    #[Route('/help', name: 'app.help')]
+    public function help(): Response {
+        return $this->render('signup/help.html.twig');
+    }
 }

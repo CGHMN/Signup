@@ -44,9 +44,9 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        - { path: ^/admin/new, roles: ROLE_SUPER_ADMIN }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/profile/password, roles: [ROLE_ADMIN, ROLE_USER_APPROVED, ROLE_USER_PENDING] }
+        - { path: ^/profile/update, roles: [ROLE_ADMIN, ROLE_USER_APPROVED, ROLE_USER_PENDING] }
         - { path: ^/profile, roles: [ROLE_USER_APPROVED, ROLE_USER_PENDING] }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

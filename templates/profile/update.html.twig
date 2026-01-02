@@ -1,0 +1,171 @@
+{% extends 'base.html.twig' %}
+
+{% set title = 'Profile Update' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/theme/admin.css">
+{% endblock %}
+
+{% block body %}
+{% include 'profile/_navbar.html.twig' %}
+<h3 class="form-header">Here you may update your profile.</h3>
+{{ form_start(form) }}
+<table class="data-table">
+    <tr>
+        <td><b>Contact Info</b></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            {{ form_label(form.email) }}
+            {{ form_errors(form.email) }}
+        </td>
+        <td>
+            {{ form_widget(form.email) }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {{ form_label(form.contactMethod, 'What is your preferred contact method?') }}
+            {{ form_errors(form.contactMethod) }}
+        </td>
+        <td>
+            {{ form_widget(form.contactMethod) }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {{ form_label(form.contactDetails, 'How can we reach you?') }}
+            {{ form_errors(form.contactDetails) }}
+        </td>
+        <td>
+            {{ form_widget(form.contactDetails) }}
+        </td>
+    </tr>
+    {% if not is_granted('ROLE_ADMIN') %}
+        <tr>
+            <td><b>About You</b></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>
+                {{ form_label(form.plan, 'What do you want to do on CGHMN?') }}
+                {{ form_errors(form.plan) }}
+            </td>
+            <td>
+                {{ form_widget(form.plan) }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form_label(form.needsHosting) }}
+                <span>(vs. running your own servers)</span>
+                {{ form_errors(form.needsHosting) }}
+            </td>
+            <td>
+                {{ form_widget(form.needsHosting) }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form_label(form.hasExperience) }}
+                {{ form_errors(form.hasExperience) }}
+            </td>
+            <td>
+                {{ form_widget(form.hasExperience) }}
+            </td>
+        </tr>
+        <tr>
+            <td><b>Wireguard Peers</b></td>
+            <td></td>
+        </tr>
+        {% set peerNum = 0 %}
+        {% for peer in form.wireguardPeers %}
+            {% set peerNum = peerNum + 1 %}
+            <tr>
+                <td>Wireguard Peer {{ peerNum }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Tunnel IP</td>
+                <td>{{ peer.vars.data.tunnelIP }}</td>
+            </tr>
+            <tr>
+                <td>Routed Subnets</td>
+                <td>
+                    {% set firstSubnet = true %}
+                    {% for subnet in peer.vars.data.allowedIPs %}
+                        {% if firstSubnet %}
+                            {{ subnet.cidr }}
+                        {% else %}
+                            ,{{ subnet.cidr }}
+                        {% endif %}
+                        {% set firstSubnet = false %}
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{ form_label(peer.pubKey) }}
+                    {{ form_errors(peer.pubKey) }}
+                </td>
+                <td>
+                    {{ form_widget(peer.pubKey) }}
+                </td>
+            </tr>
+            <tr>
+                <td>Preshared Key</td>
+                <td>{{ peer.vars.data.presharedKey }}</td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+    <tr>
+        <td>
+            {{ form_label(form.password, 'To confirm, please enter your password.') }}
+            {{ form_errors(form.password) }}
+        </td>
+        <td>
+            {{ form_widget(form.password) }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {{ form_row(form.submit, {label: 'Update'}) }}
+        </td>
+        <td></td>
+    </tr>
+</table>
+
+{{ form_row(form._token) }}
+{{ form_end(form, {render_rest: false}) }}
+
+{% if peerForm %}
+    <h3 class="form-header">Create a new Wireguard Peer</h3>
+    <span class="form-header">You may have up to 4 Wireguard peers</span>
+    {{ form_start(peerForm) }}
+        <table class="data-table">
+            <tr>
+                <td>
+                    {{ form_label(peerForm.pubKey) }}
+                    <br>
+                    <a href="https://cghmn.org/sign-up/keygen" target="_blank">I don't have a WireGuard key</a>
+                    {{ form_errors(peerForm.pubKey) }}
+                </td>
+                <td>
+                    {{ form_widget(peerForm.pubKey) }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    {{ form_row(peerForm.submit) }}
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    {{ form_end(peerForm) }}
+{% endif %}
+
+{% include '_errors.html.twig' %}
+
+{% endblock %}

@@ -15,20 +15,20 @@ class RequestType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('decision', ChoiceType::class, [
-                'label' => false,
-                'mapped' => false,
-                'choices' => $options['actions'],
-                'constraints' => [
-                    new NotBlank(),
-                ],
-            ])
-        ;
+            'label' => false,
+            'mapped' => false,
+            'choices' => $options['actions'],
+            'constraints' => [
+                new NotBlank(),
+            ],
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'admin' => false,
             'actions' => [
                 'Do Nothing' => 0,
                 'Approve' => 1,

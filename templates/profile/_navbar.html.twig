@@ -1,0 +1,29 @@
+{% block stylesheets %}
+<link rel="stylesheet" href="/theme/admin.css">
+{% endblock %}
+
+{% if is_granted('ROLE_ADMIN') %}
+    {% set pages = [
+        {'name': 'Back', 'route': 'app.admin'},
+    ] %}
+{% else %}
+    {% set pages = [
+        {'name': 'Back', 'route': 'app.profile'},
+    ] %}
+{% endif %}
+
+<div id="topbar">
+    <h1 id="titlebar">{{ title }}</h1>
+    <nav id="menubar">
+        <ol>
+            {% for page in pages %}
+                <a class="menu-item" href="{{ path(page.route) }}">
+                    <li>{{ page.name }}</li>
+                </a>
+            {% endfor %}
+            <a class="menu-item" style="float: right;" href="{{ path('app.logout') }}">
+                <li>Log Out</li>
+            </a>
+        </ol>
+    </nav>
+</div>

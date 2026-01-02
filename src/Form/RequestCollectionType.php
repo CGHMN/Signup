@@ -20,6 +20,9 @@ class RequestCollectionType extends AbstractType {
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Go!',
+                'attr' => [
+                    'class' => 'room',
+                ],
             ])
         ;
     }

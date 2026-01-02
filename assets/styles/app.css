@@ -184,6 +184,7 @@ td, th {
   cursor: pointer;
   box-sizing: border-box;
 }
+
 .button[disabled], button[disabled], input[type=submit][disabled], input[type=reset][disabled], input[type=button][disabled], input[type=file]::file-selector-button[disabled] {
   cursor: default;
   opacity: 0.5;
@@ -260,7 +261,11 @@ legend, fieldset {
   border: 1px solid #0cc10c;
 }
 
-.required::before {
+.required-opt::before {
   content: " * ";
   color: red;
+}
+
+.room {
+  margin: 10px 5px 0px 5px;
 }

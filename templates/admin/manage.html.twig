@@ -7,14 +7,15 @@
 {% include 'admin/_navbar.html.twig' %}
 {# TODO: Add some styling #}
 
-<div style="margin: 10px 5px 0 5px;">
+<div class="room">
     <h1>Hello {{ app.user.username }}!</h1>
     <h3>What would you like to do today?</h3>
     <ul>
         <li><a href="{{ path('app.profile.changePassword') }}">Change My Password</a></li>
-        <li>Update My Account</li>
-        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+        {# coming soon <li>Update My Account</li> #}
+        {% if is_granted('ROLE_CREATE_ADMINS') %}
             <li><a href="{{ path('app.admin.new') }}">Create a New Admin</a></li>
+            <li><a href="{{ path('app.admin.admins') }}">Manage Existing Admins</a></li>
         {% endif %}
         <li><a href="{{ path('app.logout') }}">Logout</a></li>
     </ul>

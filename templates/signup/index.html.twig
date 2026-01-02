@@ -2,22 +2,61 @@
 
 {% block title %}CGHMN Signup Page{% endblock %}
 
+{% block stylesheets %}
+<style>
+    input {
+        margin-top: 3px;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 
-{{ form_start(form) }}
+<div class="room">
+    <h1>CGHMN Signup Page</h1>
+    <p>
+        Welcome to the CGHMN signup page!<br>
+        Here you can submit a request to join the Compu-Global-Hyper-Mega-Net
+    </p>
 
-    {{ form_row(form.username) }}
-    {{ form_row(form.plainPassword) }}
-    {{ form_row(form.email) }}
-    {{ form_row(form.pubKey) }}
-    <a href="https://cghmn.org/sign-up/keygen" target="_blank">I don't have a WireGuard key</a>
-    {{ form_row(form.plan) }}
-    {{ form_row(form.needsHosting) }}
-    {{ form_row(form.hasExperience) }}
-    {{ form_row(form.contactMethod) }}
-    {{ form_row(form.contactDetails) }}
-    {{ form_row(form.submit) }}
+    {{ form_start(form) }}
 
-{{ form_end(form) }}
+        {{ form_label(form.username, 'What\'s your username?') }}
+        {{ form_errors(form.username) }}
+        <br>
+        {{ form_widget(form.username) }}
+        <br>
+        {{ form_row(form.plainPassword) }}
+        {{ form_label(form.email, 'What\'s your email address?') }}
+        {{ form_errors(form.email) }}
+        <br>
+        {{ form_widget(form.email) }}
+        <br>
+        {{ form_label(form.pubKey, 'What\'s your Wireguard public key?') }}
+        {{ form_errors(form.pubKey) }}
+        <br>
+        <a href="https://cghmn.org/sign-up/keygen" target="_blank">I don't have a WireGuard key</a>
+        <br>
+        {{ form_widget(form.pubKey) }}
+        {{ form_label(form.plan, 'What would you like to do on CGHMN?') }}
+        {{ form_errors(form.plan) }}
+        <br>
+        {{ form_widget(form.plan) }}
+        <br>
+        {{ form_label(form.needsHosting, 'Will you need server hosting from CGHMN?') }}
+        <br>
+        <span>(vs running your own servers)</span>
+        {{ form_errors(form.needsHosting) }}
+        <br>
+        {{ form_widget(form.needsHosting) }}
+        <br>
+        {{ form_row(form.hasExperience) }}
+        {{ form_row(form.contactMethod) }}
+        {{ form_row(form.contactDetails) }}
+        {{ form_row(form.submit, {'label': 'Submit Request'}) }}
+
+    {{ form_end(form) }}
+    <p><br><a href="{{ path('app.help') }}">Know web design? Help us make this page look better!</a></p>
+</div>
 
 {% endblock %}

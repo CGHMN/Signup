@@ -1,5 +1,5 @@
 {% if app.session.flashbag.peek('notice') %}
-    <p>
+    <p class="room">
         {% set first = true %}
         {% for message in app.flashes('notice') %}
             {% if first %}
@@ -13,7 +13,7 @@
 {% endif %}
 
 {% if app.session.flashbag.peek('error') %}
-<ul>
+<ul class="room">
     {% for message in app.flashes('error') %}
         <li>{{ message }}</li>
     {% endfor %}

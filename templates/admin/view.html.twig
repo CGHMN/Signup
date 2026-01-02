@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% set title = 'User Viewer' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+{% include 'admin/_navbar.html.twig' %}
+<h3 class="form-header">Details of User {{ user.username }}</h3>
+<table class="data-table">
+    <tr>
+        <td>Username</td>
+        <td>{{ user.username }}</td>
+    </tr>
+    <tr>
+        <td>Email Address</td>
+        <td>{{ user.email }}</td>
+    </tr>
+    <tr>
+        <td>Wireguard Peers</td>
+        <td>{{ user.wireguardPeers.count }}</td>
+    </tr>
+    {% set peerNum = 0 %}
+    {% for peer in user.wireguardPeers %}
+        {% set peerNum = peerNum + 1 %}
+        <tr>
+            <td><b>Wireguard Peer {{ peerNum }}</b></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>ID on Wireguard Router</td>
+            <td>{{ peer.routerID }}</td>
+        </tr>
+        <tr>
+            <td>Tunnel IP</td>
+            <td>{{ peer.tunnelIP }}</td>
+        </tr>
+        <tr>
+            <td>Routed Subnets</td>
+            <td>
+                {% set firstSubnet = true %}
+                {% for subnet in peer.allowedIPs %}
+                    {% if firstSubnet %}
+                        {{ subnet.cidr }}
+                    {% else %}
+                        ,{{ subnet.cidr }}
+                    {% endif %}
+                    {% set firstSubnet = false %}
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
+            <td>Public Key</td>
+            <td>
+                {{ peer.pubKey }}
+            </td>
+        </tr>
+        <tr>
+            <td>Preshared Key</td>
+            <td>{{ peer.presharedKey }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

@@ -19,3 +19,7 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+###> additional ignored files ###
+.db_last_migration
+###< additional ignored files ###

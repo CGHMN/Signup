@@ -1,0 +1,22 @@
+services:
+  db:
+    image: mariadb:11.7.2-noble
+    volumes:
+      - db-data:/var/lib/mysql
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: true
+      MARIADB_DATABASE: ${DATABASE_NAME:-app}
+      MARIADB_USER: ${DATABASE_USER:-app}
+      MARIADB_PASSWORD: ${DATABASE_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  db-data: {}

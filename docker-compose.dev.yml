@@ -1,0 +1,51 @@
+include:
+  - docker-compose.base.yml
+
+services:
+  app-dev:
+    image: app-dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/var/www/html:Z
+    env_file:
+      - path: ./.env.docker-dev
+        required: false
+    environment:
+      - APP_ENV=dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # -- Local development tools --
+  dbadmin:
+    image: adminer:latest
+    environment:
+      - ADMINER_DESIGN=galkaev
+    ports:
+      - 127.0.0.1:8081:8080
+
+  mailcatcher:
+    image: dockage/mailcatcher:latest
+    ports:
+      - 127.0.0.1:8083:1080
+      - 127.0.0.1:1025:1025
+
+  # -- Overrides --
+  # Forward database ports to localhost for non- or partially dockerized development
+  db:
+    env_file:
+      - path: .env.docker-dev
+        required: true
+    ports:
+      - 127.0.0.1:3306:3306

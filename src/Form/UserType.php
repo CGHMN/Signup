@@ -97,7 +97,7 @@ class UserType extends AbstractType
                     ),
                 ],
                 'label_attr' => ['class' => 'required-opt'],
-                'disabled' => true
+                'disabled' => isset($options['update'])
             ]);
         }
 

@@ -13,7 +13,7 @@ services:
     volumes:
       - ./:/var/www/html:Z
     env_file:
-      - path: ./.env.docker-dev
+      - path: ./.env.dev
         required: false
     environment:
       - APP_ENV=dev
@@ -45,7 +45,7 @@ services:
   # Forward database ports to localhost for non- or partially dockerized development
   db:
     env_file:
-      - path: .env.docker-dev
+      - path: .env.dev
         required: true
     ports:
       - 127.0.0.1:3306:3306

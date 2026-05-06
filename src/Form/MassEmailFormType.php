@@ -29,7 +29,7 @@ class MassEmailFormType extends AbstractType
                 'required' => true,
                 'constraints' => [
                     new NotBlank(
-                        message: 'Please choose enter a subject for your email ya dingus.',
+                        message: 'You really wanna send an empty email?',
                     ),
                 ],
             ])

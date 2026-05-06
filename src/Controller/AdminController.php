@@ -360,8 +360,8 @@ final class AdminController extends AbstractController
             foreach ($users as $user) {
                 if (in_array("ROLE_USER_APPROVED", $user->getRoles(), true)) {
                     $email = (new Email())
-                        ->from(new Address($this->getParameter('app.contactEmail'), 'CGHMN User Services'))
-                        ->replyTo($this->getParameter('app.email'))
+                        ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
+                        ->replyTo($this->getParameter('app.contactEmail'))
                         ->to($user->getEmail())
                         ->subject($subject)
                         ->text($body);
@@ -412,7 +412,7 @@ final class AdminController extends AbstractController
                         break;
                     case 1:
                         // Give the user the ROLE_USER_BANNED role.
-                        // We don't delete their info to prevent them from ever signing up again.
+                        // We don't delete their info so we can prevent them from ever signing up again.
                         $user->setRoles(['ROLE_USER_BANNED']);
                         $usersBanned++;
                         break;
@@ -516,7 +516,6 @@ final class AdminController extends AbstractController
         $user->setHasExperience(false);
         $user->setContactMethod("none");
         $user->setContactDetails("");
-        $user->setPubKey("0000000000000000000000000000000000000000000=");
 
         // Flush the entity manager.
         $manager->flush();

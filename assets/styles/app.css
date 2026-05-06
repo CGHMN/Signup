@@ -210,7 +210,7 @@ textarea, select, input {
   box-sizing: border-box;
 }
 
-textarea, select, input[type=text], input[type=password], input[type=file] {
+textarea, select, input[type=text], input[type=password], input[type=file], input[type=email] {
   width: 100%;
 }
 

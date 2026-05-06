@@ -21,6 +21,7 @@ use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 // Big ol' form type for handling every form type relating to users/admins.
 class UserType extends AbstractType
@@ -74,6 +75,7 @@ class UserType extends AbstractType
                         minMessage: 'Please choose a password that is at least {{ limit }} characters.',
                         max: 4096,
                     ),
+                    new NotCompromisedPassword(),
                 ],
             ]);
         }

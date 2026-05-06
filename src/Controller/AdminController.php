@@ -10,6 +10,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\UserRepository;
 use App\Entity\Requests;
@@ -18,6 +19,7 @@ use App\Entity\User;
 use App\Form\RequestCollectionType;
 use App\Form\UserType;
 use App\Form\WireguardPeerType;
+use App\Form\MassEmailFormType;
 
 final class AdminController extends AbstractController
 {
@@ -334,28 +336,48 @@ final class AdminController extends AbstractController
         ]);
     }
 
-    private function sendConfirmationEmail(User $user, WireguardPeer $peer, 
-        string $exampleConfig, MailerInterface $mailer): void {
-        // Create the email contents
-        $body =
-            "Dear {$user->getUsername()},\r\n" .
-            "Welcome to CGHMN!\r\n" .
-            "Your tunnel IP is {$peer->getTunnelIP()},\r\n" .
-            "Your WireGuard Preshared Key is {$peer->getPresharedKey()},\r\n" . 
-            "And your routed subnet is {$peer->getAllowedIPs()[0]['cidr']}.\r\n" .
-            "Here's an example config you can use:\r\n---\r\n" .
-            "$exampleConfig\r\n---\r\n" .
-            "If you're not sure how to set up your CGHMN Router,\r\n" .
-            "you can find some beginner-friendly instructions at:\r\n" .
-            "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
-            "If you need help with anything,\r\n" .
-            "feel free to reach out at\r\n" .
-            $this->getParameter('app.contactEmail');
-        $email = (new Email())
-            ->to($user->getEmail())
-            ->subject("Welcome to CGHMN!")
-            ->text($body);
-        $mailer->send($email);
+    // Allow admins to mass send emails.
+    #[Route('/admin/email', name: 'app.admin.email')]
+    public function email(Request $request, UserRepository $userRepository, 
+        MailerInterface $mailer) {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $form = $this->createForm(MassEmailFormType::class);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Let's send an email to every approved user on CGHMN!
+            // First, get the list of users.
+            $users = $userRepository->findAll();
+
+            // Next, get the details of the email we're supposed to send.
+            $subject = $form->get('subject')->getData();
+
+            // Add the admin's name to the end of the body for accountability.
+            $body = preg_replace("/\n(?<!\r)/", "\r\n", $form->get('body')->getData() . "\nSent by {$this->getUser()->getUsername()}");
+
+            // Now, SEND!
+            $emailsSent = 0;
+            foreach ($users as $user) {
+                if (in_array("ROLE_USER_APPROVED", $user->getRoles(), true)) {
+                    $email = (new Email())
+                        ->from(new Address($this->getParameter('app.contactEmail'), 'CGHMN User Services'))
+                        ->replyTo($this->getParameter('app.email'))
+                        ->to($user->getEmail())
+                        ->subject($subject)
+                        ->text($body);
+                    $mailer->send($email);
+                    $emailsSent++;
+                }
+            }
+            $this->addFlash('notice', 
+                "Successfully sent emails to $emailsSent users.",
+            );
+            return $this->redirect($request->getUri());
+        }
+
+        return $this->render('admin/email.html.twig', [
+            'form' => $form,
+        ]);
     }
 
     // Page for managing admins (Ban/Delete/etc)
@@ -421,6 +443,36 @@ final class AdminController extends AbstractController
         return $this->render('admin/admins.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    // Helper function to send confirmation emails
+    private function sendConfirmationEmail(User $user, WireguardPeer $peer, 
+        string $exampleConfig, MailerInterface $mailer): void {
+        // Create the email contents
+        $body =
+            "Dear {$user->getUsername()},\r\n" .
+            "Welcome to CGHMN!\r\n" .
+            "Here are your connection details:\r\n" .
+            "Tunnel IP: {$peer->getTunnelIP()}\r\n" .
+            "WireGuard Preshared Key: {$peer->getPresharedKey()}\r\n" . 
+            "Routed Subnet: {$peer->getAllowedIPs()[0]['cidr']}\r\n" .
+            "Here's an example config you can use:\r\n---\r\n" .
+            "$exampleConfig\r\n---\r\n" .
+            "If you're not sure how to set up your CGHMN Router,\r\n" .
+            "you can find some beginner-friendly instructions at:\r\n" .
+            "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
+            "If you need help with anything,\r\n" .
+            "feel free to reach out at\r\n" .
+            $this->getParameter('app.contactEmail') .
+            "Have fun!\r\n" .
+            "-The CGHMN Team";
+        $email = (new Email())
+            ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
+            ->replyTo($this->getParameter('app.contactEmail'))
+            ->to($user->getEmail())
+            ->subject("Welcome to CGHMN!")
+            ->text($body);
+        $mailer->send($email);
     }
 
     // Helper function to clean a user (delete their Wireguard peers)

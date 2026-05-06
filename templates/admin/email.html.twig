@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% set title = 'Email Sender' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+{% include 'admin/_navbar.html.twig' %}
+
+<h3 class="form-header">Send emails to every CGHMN user.</h3>
+<h5 class="form-header"><i>
+    Please be careful! Think before you type!<br>
+    Also note your username will be attached to the end of the email.
+</i></h5>
+{% form_theme form 'form_table_layout.html.twig' %}
+
+{{ form(form) }}
+
+{% include '_errors.html.twig' %}
+
+{% endblock %}

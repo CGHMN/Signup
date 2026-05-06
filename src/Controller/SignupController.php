@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\RequestRepository;
@@ -42,7 +43,8 @@ final class SignupController extends AbstractController
 
             // Send them an email with their verification code.
             $email = (new Email())
-                ->from(new Address($this->getParameter('app.contactEmail'), 'CGHMN User Services'))
+                ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
+                ->replyTo($this->getParameter('app.contactEmail'))
                 ->to($user->getEmail())
                 ->subject("CGHMN Email Verification")
                 ->text(

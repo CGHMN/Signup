@@ -274,8 +274,8 @@ final class AdminController extends AbstractController
                     case 2:
                         // Delete the users Wireguard peers
                         array_merge($errors, $user->clean($httpClient, $manager,
-                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')),
-                            $this->getParameter('app.routerID'));
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey'),
+                            $this->getParameter('app.routerID')));
                         // Give the user the ROLE_USER_BANNED role.
                         // We don't delete their info to prevent them from ever signing up again.
                         $user->setRoles(['ROLE_USER_BANNED']);
@@ -284,8 +284,8 @@ final class AdminController extends AbstractController
                     case 3:
                         // This is the same as banning a user except they can sign up again.
                         array_merge($errors, $user->clean($httpClient, $manager,
-                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')),
-                            $this->getParameter('app.routerID'));
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey'),
+                            $this->getParameter('app.routerID')));
                         $manager->remove($user);
                         $usersDeleted++;
                         break;

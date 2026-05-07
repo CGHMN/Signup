@@ -202,7 +202,7 @@ foreach ($previous_peers as $peer) {
 
 	$new_peer_data = [
 		'tunnel_ip' => $peer->tunnel_ip,
-		'allowed_ips' => json_encode(array_map(fn($v) => $v->cidr, $peer->allowed_ips)),
+		'allowed_ips' => json_encode($peer->allowed_ips),
 		'pub_key' => $peer->public_key,
 		'preshared_key' => $peer->preshared_key,
 		'router_id' => 0,

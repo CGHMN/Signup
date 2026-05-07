@@ -212,6 +212,7 @@ textarea, select, input {
 
 textarea, select, input[type=text], input[type=password], input[type=file], input[type=email] {
   width: 100%;
+  min-width: 30vw;
 }
 
 textarea:focus, select:focus, input:focus {

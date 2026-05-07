@@ -29,7 +29,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^[a-z]\w{0, 63}$/i', message: 'You must enter a valid username (no spaces or special characters).')]
+    #[Assert\Regex(pattern: '/^[a-z][\w\-]{0, 63}$/i', message: 'You must enter a valid username (no spaces or special characters).')]
     private ?string $username = null;
 
     /**

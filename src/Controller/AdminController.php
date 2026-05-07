@@ -59,7 +59,7 @@ final class AdminController extends AbstractController
                     case 1:
                         // Create the new Wireguard Peer
                         $response = $httpClient->request('POST',
-                            "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
+                            "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/gen_new_peer", [
                                 'body' => [
                                     'name' => "Tunnel for member {$user->getUsername()}",
                                     'public_key' => $user->getPubKey(),
@@ -96,7 +96,7 @@ final class AdminController extends AbstractController
                         // Get the example config
                         $config = null;
                         $response = $httpClient->request('GET',
-                            "{$this->getParameter('app.router')}servers/1/peers/{$res['id']}/config", [
+                            "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$res['id']}/config", [
                                 'headers' => [
                                     'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                                 ],
@@ -108,7 +108,7 @@ final class AdminController extends AbstractController
                             // Delete the orphaned WG peer and continue.
                             $message = $response->getHeaders(false)['status'][0];
                             $response = $httpClient->request('DELETE',
-                                "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
+                                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getRouterID()}", [
                                     'headers' => [
                                         'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                                     ],
@@ -252,7 +252,7 @@ final class AdminController extends AbstractController
                         // Get the example config
                         $config = null;
                         $response = $httpClient->request('GET',
-                            "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}/config", [
+                            "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getRouterID()}/config", [
                                 'headers' => [
                                     'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                                 ],
@@ -274,7 +274,8 @@ final class AdminController extends AbstractController
                     case 2:
                         // Delete the users Wireguard peers
                         array_merge($errors, $user->clean($httpClient, $manager,
-                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')));
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')),
+                            $this->getParameter('app.routerID'));
                         // Give the user the ROLE_USER_BANNED role.
                         // We don't delete their info to prevent them from ever signing up again.
                         $user->setRoles(['ROLE_USER_BANNED']);
@@ -283,7 +284,8 @@ final class AdminController extends AbstractController
                     case 3:
                         // This is the same as banning a user except they can sign up again.
                         array_merge($errors, $user->clean($httpClient, $manager,
-                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')));
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')),
+                            $this->getParameter('app.routerID'));
                         $manager->remove($user);
                         $usersDeleted++;
                         break;
@@ -295,7 +297,7 @@ final class AdminController extends AbstractController
             if ($usersBanned > 0 || $usersDeleted > 0) {
                 // Don't care about the response.
                 $response = $httpClient->request('POST',
-                    "{$this->getParameter('app.router')}servers/1/reload", [
+                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/reload", [
                         'headers' => [
                             'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                         ],
@@ -363,7 +365,6 @@ final class AdminController extends AbstractController
             foreach ($users as $user) {
                 $email = (new Email())
                     ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
-                    ->replyTo($this->getParameter('app.contactEmail'))
                     ->to($user->getEmail())
                     ->subject($subject)
                     ->text($body);
@@ -473,7 +474,6 @@ final class AdminController extends AbstractController
             "-The CGHMN Team";
         $email = (new Email())
             ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
-            ->replyTo($this->getParameter('app.contactEmail'))
             ->to($user->getEmail())
             ->subject("Welcome to CGHMN!")
             ->text($body);

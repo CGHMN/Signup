@@ -44,7 +44,6 @@ final class SignupController extends AbstractController
             // Send them an email with their verification code.
             $email = (new Email())
                 ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
-                ->replyTo($this->getParameter('app.contactEmail'))
                 ->to($user->getEmail())
                 ->subject("CGHMN Email Verification")
                 ->text(

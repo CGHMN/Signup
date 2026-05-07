@@ -262,7 +262,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Helper function to clean a user (delete their Wireguard peers)
     public function clean(HttpClientInterface $httpClient,
         EntityManagerInterface $manager, string $routerAPI,
-        string $routerAPIkey): array {
+        string $routerAPIkey, int $routerID): array {
         // Log any errors we experience.
         $errors = [];
         // Get their Wireguard peers
@@ -272,7 +272,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         foreach ($peers as $peer) {
             // Delete the Wireguard peer from the router.
             $response = $httpClient->request('DELETE',
-                "{$routerAPI}servers/1/peers/{$peer->getRouterID()}", [
+                "{$routerAPI}servers/{$routerID}/peers/{$peer->getRouterID()}", [
                     'headers' => [
                         'X-API-Key' => $routerAPIkey,
                     ],

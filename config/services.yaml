@@ -11,6 +11,7 @@ parameters:
     app.email: '%env(EMAIL)%'
     app.router: '%env(ROUTER)%'
     app.rtrApiKey: '%env(RTR_API_KEY)%'
+    app.routerID: '%env(ROUTER_ID)%'
 
 services:
     # default configuration for services in *this* file

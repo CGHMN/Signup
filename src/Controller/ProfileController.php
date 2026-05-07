@@ -104,7 +104,7 @@ final class ProfileController extends AbstractController
             // Update their Wireguard peer on the router.
             foreach ($form->get('wireguardPeers') as $peer) {
                 $response = $httpClient->request('PUT',
-                    "{$this->getParameter('app.router')}servers/1/peers/{$peer->getData()->getRouterID()}", [
+                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getRouterID()}", [
                         'json' => [
                             'public_key' => $peer->get('pubKey')->getData(),
                         ],
@@ -137,7 +137,7 @@ final class ProfileController extends AbstractController
                 // Create the peer on the router
                 $tunnelNum = strval($user->getWireguardPeers()->count() + 1);
                 $response = $httpClient->request('POST',
-                    "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
+                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/gen_new_peer", [
                         'body' => [
                             'name' => "Tunnel $tunnelNum for member {$user->getUsername()}",
                             'public_key' => $newPeer->getPubKey(),
@@ -215,7 +215,8 @@ final class ProfileController extends AbstractController
 
             // Well, they asked for it. Start by cleanin their Wireguard peers.
             $errors = $this->getUser()->clean($httpClient, $manager,
-                $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey'));
+                $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey'), 
+                $this->getParameter('app.routerID'));
 
             if (count($errors) > 0) {
                 $this->addFlash('notice',

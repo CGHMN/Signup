@@ -334,7 +334,7 @@ final class AdminController extends AbstractController
     #[Route('/admin/users/{id<\d+>}', name: 'app.admin.users.view')]
     public function editUser(User $user, Security $security) {
         // This page is only for normal users.
-        if ($security->isGrantedForUser($user, 'ROLE_USER_APPROVED')) {
+        if (!$security->isGrantedForUser($user, 'ROLE_USER_APPROVED')) {
             return $this->redirectToRoute('app.admin');
         }
 

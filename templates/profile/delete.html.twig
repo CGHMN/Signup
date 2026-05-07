@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% set title = 'Account Deletion' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+{% include 'admin/_navbar.html.twig' %}
+
+<h3 class="form-header">Delete your Account.</h3>
+<h5 class="form-header" style="color: orange;"><i>Warning!</i></h5>
+
+<div class="room">
+    <p>
+        Deleting your account is permanent and <b>cannot be undone!</b><br>
+        All of your information, including information required for you to connect to CGHMN,
+        (such as your Wireguard keys, allocated IP addresses, etc),
+        will be deleted.<br>
+        <b>You will no longer be able to connect to CGHMN if you continue!</b><br>
+        If you understand all of the above, and are sure you want to leave the network,
+        check the box below and click "Delete my Account"<br>
+    </p>
+
+    {{ form(form) }}
+</div>
+
+
+{% include '_errors.html.twig' %}
+
+{% endblock %}

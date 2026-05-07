@@ -42,6 +42,7 @@ class MakeAdminCommand extends Command
         $newAdmin = new User();
         $newAdmin->setUsername($username);
         $newAdmin->setPassword($this->passwordHasher->hashPassword($newAdmin, $input->getArgument('password')));
+        $newAdmin->setRoles(['ROLE_SUPER_ADMIN']);
         $newAdmin->setEmail($input->getArgument('email'));
         $newAdmin->setPubKey('0000000000000000000000000000000000000000000=');
         $newAdmin->setContactMethod('Email');

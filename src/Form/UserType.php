@@ -47,9 +47,14 @@ class UserType extends AbstractType
         // If a user/admin is updating their own info, they need to enter their password.
         if ($options['update']) {
             $builder->add('password', PasswordType::class, [
-                'label' => ($options['update'] === 'password') ? 
+                'label' => ($options['update'] === 'password') ?
                     'Please enter your current password.' :
                     'Please enter your password.',
+                'constraints' => [
+                    new NotBlank(
+                        message: 'You must enter your password.',
+                    ),
+                ],
                 'label_attr' => ['class' => 'required-opt'],
                 'mapped' => false,
             ]);

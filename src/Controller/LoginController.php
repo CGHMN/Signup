@@ -24,7 +24,7 @@ class LoginController extends AbstractController
             'error' => $error,
         ]);
     }
-    
+
     #[Route(path: '/next', name: 'app.next')]
     public function next(): Response {
         // Redirect admins to the admin page.

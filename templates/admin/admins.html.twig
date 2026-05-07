@@ -6,7 +6,7 @@
 {% block body %}
 {% include 'admin/_navbar.html.twig' %}
 
-{# Display the pending approval/rejection form #}
+{# Display the list of admins #}
 <h3 class="form-header">Admins</h3>
 {{ form_start(form) }}
 <table class="data-table">
@@ -18,7 +18,7 @@
         <th>Contact Details</th>
         <th>Action</th>
     </tr>
-    {# Each request is displayed as a row in the table. #}
+    {# Each admin is displayed as a row in the table. #}
     {% for request in form.requests %}
         <tr>
             <td>{{ request.vars.data.username }}</td>

@@ -16,22 +16,24 @@ class MassEmailFormType extends AbstractType
     {
         $builder
             ->add('subject', TextType::class, [
-                'label' => 'Email Subject', 
+                'label' => 'Email Subject',
                 'required' => true,
                 'constraints' => [
                     new NotBlank(
                         message: 'Please choose enter a subject for your email ya dingus.',
                     ),
                 ],
+                'label_attr' => ['class' => 'required-opt'],
             ])
             ->add('body', TextareaType::class, [
-                'label' => 'Email Body', 
+                'label' => 'Email Body',
                 'required' => true,
                 'constraints' => [
                     new NotBlank(
                         message: 'You really wanna send an empty email?',
                     ),
                 ],
+                'label_attr' => ['class' => 'required-opt'],
             ])
             ->add('send', SubmitType::class, ['label' => 'Send'])
         ;

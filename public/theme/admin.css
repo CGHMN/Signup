@@ -42,6 +42,7 @@ body {
 
 .data-table tbody tr td {
     border: 1px solid black;
+    width: 50%;
 }
 
 .data-table tbody tr th {

@@ -49,10 +49,10 @@ final class SignupController extends AbstractController
                 ->subject("CGHMN Email Verification")
                 ->text(
                     "Dear {$user->getUsername()},\r\n" .
-                    "Your verification code is:\r\n" . 
+                    "Your verification code is:\r\n" .
                     $session->get('emailCode') . "\r\n" .
                     "This code expires in 20 minutes.\r\n" .
-                    "If you do not recognize this email, please email {$this->getParameter('app.contactEmail')}.", 
+                    "If you do not recognize this email, please email {$this->getParameter('app.contactEmail')}.",
                 );
             $mailer->send($email);
 
@@ -70,8 +70,8 @@ final class SignupController extends AbstractController
         // Check that there is a pending request in the session.
         $session = $request->getSession();
 
-        if ($session->get('pendingRequest') === null || 
-            $session->get('emailCode') === null || 
+        if ($session->get('pendingRequest') === null ||
+            $session->get('emailCode') === null ||
             $session->get('expires') === null ||
             $session->get('expires') < time()) {
             $session->invalidate();
@@ -81,7 +81,7 @@ final class SignupController extends AbstractController
             ]);
         }
 
-        // If the request has already been sucessfully submitted, 
+        // If the request has already been sucessfully submitted,
         // kill the session and print a success message.
         if ($session->get('submitted')) {
             $session->invalidate();

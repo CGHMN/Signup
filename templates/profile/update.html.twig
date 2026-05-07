@@ -13,8 +13,7 @@
 {{ form_start(form) }}
 <table class="data-table">
     <tr>
-        <td><b>Contact Info</b></td>
-        <td></td>
+        <td colspan="2" ><b>Contact Info</b></td>
     </tr>
     <tr>
         <td>
@@ -45,8 +44,7 @@
     </tr>
     {% if not is_granted('ROLE_ADMIN') %}
         <tr>
-            <td><b>About You</b></td>
-            <td></td>
+            <td colspan="2" ><b>About You</b></td>
         </tr>
         <tr>
             <td>
@@ -130,10 +128,9 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td colspan="2">
             {{ form_row(form.submit, {label: 'Update'}) }}
         </td>
-        <td></td>
     </tr>
 </table>
 

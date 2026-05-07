@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,12 +25,12 @@ use App\Form\MassEmailFormType;
 final class AdminController extends AbstractController
 {
     #[Route('/admin', name: 'app.admin')]
-    public function index(Request $request, UserRepository $userRepository, 
+    public function index(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer): Response {
+        MailerInterface $mailer, Security $security): Response {
         // Print out the list of requests.
-        $requests = new Requests($userRepository, 'ROLE_USER_PENDING');
-        
+        $requests = new Requests($userRepository, 'ROLE_USER_PENDING', $security);
+
         // If there are no pending requests, say so and return immediately.
         $form = $this->createForm(RequestCollectionType::class, $requests);
         if ($requests->getRequests()->count() === 0) {
@@ -57,7 +58,7 @@ final class AdminController extends AbstractController
                         break;
                     case 1:
                         // Create the new Wireguard Peer
-                        $response = $httpClient->request('POST', 
+                        $response = $httpClient->request('POST',
                             "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
                                 'body' => [
                                     'name' => "Tunnel for member {$user->getUsername()}",
@@ -126,7 +127,7 @@ final class AdminController extends AbstractController
                         }
                         $config = $response->getContent();
 
-                        // Everything has succeeded. Persist the peer, approve the user, 
+                        // Everything has succeeded. Persist the peer, approve the user,
                         // and let them know they were approved.
                         $manager->persist($peer);
                         $user->setRoles(['ROLE_USER_APPROVED']);
@@ -150,13 +151,13 @@ final class AdminController extends AbstractController
                 }
             }
             $manager->flush();
-            $this->addFlash('notice', 
+            $this->addFlash('notice',
                 "Successfully approved $usersApproved, requests, " .
-                "rejected $usersRejected requests, " . 
+                "rejected $usersRejected requests, " .
                 "and deleted $usersDeleted requests."
             );
             if (count($errors) > 0) {
-                $this->addFlash('notice', 
+                $this->addFlash('notice',
                     'However, the following errors were encountered ' .
                     'while attempting to process requests:'
                 );
@@ -171,7 +172,7 @@ final class AdminController extends AbstractController
             'form' => $form,
         ]);
     }
-    
+
     // Admin management page (Create/Delete admins, change your password, delete your account.)
     #[Route('/admin/manage', name: 'app.admin.manage')]
     public function adminMgmt() {
@@ -217,11 +218,11 @@ final class AdminController extends AbstractController
 
     // Page for managing users. (Banning/Deleting/Etc)
     #[Route('/admin/users', name: 'app.admin.users')]
-    public function users(Request $request, UserRepository $userRepository, 
+    public function users(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer): Response {
+        MailerInterface $mailer, Security $security): Response {
         // Print out the list of users.
-        $requests = new Requests($userRepository, 'ROLE_USER_APPROVED');
+        $requests = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
         $form = $this->createForm(RequestCollectionType::class, $requests, [
             'actions' => [
                 'Do Nothing' => 0,
@@ -272,7 +273,8 @@ final class AdminController extends AbstractController
                         break;
                     case 2:
                         // Delete the users Wireguard peers
-                        array_merge($errors, $this->cleanUser($user, $httpClient, $manager));
+                        array_merge($errors, $user->clean($httpClient, $manager,
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')));
                         // Give the user the ROLE_USER_BANNED role.
                         // We don't delete their info to prevent them from ever signing up again.
                         $user->setRoles(['ROLE_USER_BANNED']);
@@ -280,7 +282,8 @@ final class AdminController extends AbstractController
                         break;
                     case 3:
                         // This is the same as banning a user except they can sign up again.
-                        array_merge($errors, $this->cleanUser($user, $httpClient, $manager));
+                        array_merge($errors, $user->clean($httpClient, $manager,
+                            $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey')));
                         $manager->remove($user);
                         $usersDeleted++;
                         break;
@@ -291,7 +294,7 @@ final class AdminController extends AbstractController
             // Reload the Wireguard interface (but only if we need to)
             if ($usersBanned > 0 || $usersDeleted > 0) {
                 // Don't care about the response.
-                $response = $httpClient('POST', 
+                $response = $httpClient->request('POST',
                     "{$this->getParameter('app.router')}servers/1/reload", [
                         'headers' => [
                             'X-API-Key' => $this->getParameter('app.rtrApiKey'),
@@ -301,13 +304,13 @@ final class AdminController extends AbstractController
                 );
             }
 
-            $this->addFlash('notice', 
+            $this->addFlash('notice',
                 "Successfully resent $emailsSent confirmation emails, " .
-                "banned $usersBanned users, " . 
+                "banned $usersBanned users, " .
                 "and deleted $usersDeleted users."
             );
             if (count($errors) > 0) {
-                $this->addFlash('notice', 
+                $this->addFlash('notice',
                     'However, the following errors were encountered ' .
                     'while attempting to execute the requested actions:'
                 );
@@ -338,8 +341,8 @@ final class AdminController extends AbstractController
 
     // Allow admins to mass send emails.
     #[Route('/admin/email', name: 'app.admin.email')]
-    public function email(Request $request, UserRepository $userRepository, 
-        MailerInterface $mailer) {
+    public function email(Request $request, UserRepository $userRepository,
+        MailerInterface $mailer, Security $security) {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $form = $this->createForm(MassEmailFormType::class);
 
@@ -347,29 +350,27 @@ final class AdminController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Let's send an email to every approved user on CGHMN!
             // First, get the list of users.
-            $users = $userRepository->findAll();
+            $users = (new Requests($userRepository, 'ROLE_USER_APPROVED', $security))->getRequests();
 
             // Next, get the details of the email we're supposed to send.
             $subject = $form->get('subject')->getData();
 
             // Add the admin's name to the end of the body for accountability.
-            $body = preg_replace("/\n(?<!\r)/", "\r\n", $form->get('body')->getData() . "\nSent by {$this->getUser()->getUsername()}");
+            $body = preg_replace("/\n(?<!\r)/", "\r\n", $form->get('body')->getData() . "\n\n(Sent by {$this->getUser()->getUsername()})");
 
             // Now, SEND!
             $emailsSent = 0;
             foreach ($users as $user) {
-                if (in_array("ROLE_USER_APPROVED", $user->getRoles(), true)) {
-                    $email = (new Email())
-                        ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
-                        ->replyTo($this->getParameter('app.contactEmail'))
-                        ->to($user->getEmail())
-                        ->subject($subject)
-                        ->text($body);
-                    $mailer->send($email);
-                    $emailsSent++;
-                }
+                $email = (new Email())
+                    ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
+                    ->replyTo($this->getParameter('app.contactEmail'))
+                    ->to($user->getEmail())
+                    ->subject($subject)
+                    ->text($body);
+                $mailer->send($email);
+                $emailsSent++;
             }
-            $this->addFlash('notice', 
+            $this->addFlash('notice',
                 "Successfully sent emails to $emailsSent users.",
             );
             return $this->redirect($request->getUri());
@@ -382,13 +383,13 @@ final class AdminController extends AbstractController
 
     // Page for managing admins (Ban/Delete/etc)
     #[Route('/admin/admins', name: 'app.admin.admins')]
-    public function admins(Request $request, UserRepository $userRepository, 
+    public function admins(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer): Response {
+        MailerInterface $mailer, Security $security): Response {
         $this->denyAccessUnlessGranted('ROLE_CREATE_ADMINS');
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         // Print out the list of admins.
-        $requests = new Requests($userRepository, 'ROLE_ADMIN');
+        $requests = new Requests($userRepository, 'ROLE_ADMIN', $security);
         $form = $this->createForm(RequestCollectionType::class, $requests, [
             'actions' => [
                 'Do Nothing' => 0,
@@ -407,29 +408,33 @@ final class AdminController extends AbstractController
             foreach($form->get('requests') as $userRaw) {
                 // Get the user
                 $user = $userRaw->getData();
-                switch ($userRaw->get('decision')->getData()) {
-                    case 0:
-                        break;
-                    case 1:
-                        // Give the user the ROLE_USER_BANNED role.
-                        // We don't delete their info so we can prevent them from ever signing up again.
-                        $user->setRoles(['ROLE_USER_BANNED']);
-                        $usersBanned++;
-                        break;
-                    case 2:
-                        $manager->remove($user);
-                        $usersDeleted++;
-                        break;
+                if ($user === $this->getUser()) {
+                        array_push($errors, 'You can\'t delete or ban yourself through this page!');
+                } else {
+                    switch ($userRaw->get('decision')->getData()) {
+                        case 0:
+                            break;
+                        case 1:
+                            // Give the user the ROLE_USER_BANNED role.
+                            // We don't delete their info so we can prevent them from ever signing up again.
+                            $user->setRoles(['ROLE_USER_BANNED']);
+                            $usersBanned++;
+                            break;
+                        case 2:
+                            $manager->remove($user);
+                            $usersDeleted++;
+                            break;
+                    }
                 }
             }
             $manager->flush();
 
-            $this->addFlash('notice', 
-                "Successfully banned $usersBanned admins, " . 
+            $this->addFlash('notice',
+                "Successfully banned $usersBanned admins, " .
                 "and deleted $usersDeleted admins."
             );
             if (count($errors) > 0) {
-                $this->addFlash('notice', 
+                $this->addFlash('notice',
                     'However, the following errors were encountered ' .
                     'while attempting to execute the requested actions:'
                 );
@@ -446,7 +451,7 @@ final class AdminController extends AbstractController
     }
 
     // Helper function to send confirmation emails
-    private function sendConfirmationEmail(User $user, WireguardPeer $peer, 
+    private function sendConfirmationEmail(User $user, WireguardPeer $peer,
         string $exampleConfig, MailerInterface $mailer): void {
         // Create the email contents
         $body =
@@ -454,7 +459,7 @@ final class AdminController extends AbstractController
             "Welcome to CGHMN!\r\n" .
             "Here are your connection details:\r\n" .
             "Tunnel IP: {$peer->getTunnelIP()}\r\n" .
-            "WireGuard Preshared Key: {$peer->getPresharedKey()}\r\n" . 
+            "WireGuard Preshared Key: {$peer->getPresharedKey()}\r\n" .
             "Routed Subnet: {$peer->getAllowedIPs()[0]['cidr']}\r\n" .
             "Here's an example config you can use:\r\n---\r\n" .
             "$exampleConfig\r\n---\r\n" .
@@ -473,52 +478,5 @@ final class AdminController extends AbstractController
             ->subject("Welcome to CGHMN!")
             ->text($body);
         $mailer->send($email);
-    }
-
-    // Helper function to clean a user (delete their Wireguard peers)
-    private function cleanUser(User $user, HttpClientInterface $httpClient,
-        EntityManagerInterface $manager): array {
-        // Log any errors we experience.
-        $errors = [];
-        // Get their Wireguard peers
-        $peers = $user->getWireguardPeers();
-
-        // Delete them.
-        foreach ($peers as $peer) {
-            // Delete the Wireguard peer from the router.
-            $response = $httpClient->request('DELETE',
-                "{$this->getParameter('app.router')}servers/1/peers/{$peer->getRouterID()}", [
-                    'headers' => [
-                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                    ],
-                    'timeout' => 5,
-                ]
-            );
-
-            // Check for errors.
-            if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
-                // Log the message and continue.
-                array_push($errors, $response->getHeaders(false)['status'][0]);
-                continue;
-            }
-
-            // If we didn't encounter any errors, delete the peer on our end.
-            $manager->remove($peer);
-        }
-
-        // We'll give them the courtesy of deleting the info we don't use
-        // to identify users.
-        // (ie: passwords, personal info)
-        // May change this later, depending on how we want to handle unbans.
-        $user->setPassword("none");
-        $user->setPlan("");
-        $user->setNeedsHosting(false);
-        $user->setHasExperience(false);
-        $user->setContactMethod("none");
-        $user->setContactDetails("");
-
-        // Flush the entity manager.
-        $manager->flush();
-        return $errors;
     }
 }

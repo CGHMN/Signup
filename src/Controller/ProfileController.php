@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,6 +15,7 @@ use App\Entity\User;
 use App\Entity\WireguardPeer;
 use App\Form\UserType;
 use App\Form\WireguardPeerType;
+use App\Form\AccountDeleteFormType;
 
 final class ProfileController extends AbstractController
 {
@@ -41,7 +43,7 @@ final class ProfileController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Make sure that they typed their current password correctly.
             if (!$passwordHasher->isPasswordValid($user, $form->get('password')->getData())) {
-                $this->addFlash('notice', 
+                $this->addFlash('notice',
                     'Sorry, we could not verify your password. ' .
                     'Please check that you typed it correctly and try again.'
                 );
@@ -64,6 +66,7 @@ final class ProfileController extends AbstractController
     }
 
     // Allows users to update their profile.
+    // TODO: Add a new update page just for updating emails.
     #[Route('/profile/update', name: 'app.profile.update')]
     public function update(Request $request, EntityManagerInterface $manager,
         UserPasswordHasherInterface $passwordHasher, HttpClientInterface $httpClient): Response {
@@ -91,7 +94,7 @@ final class ProfileController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Make sure that they typed their current password correctly.
             if (!$passwordHasher->isPasswordValid($user, $form->get('password')->getData())) {
-                $this->addFlash('notice', 
+                $this->addFlash('notice',
                     'Sorry, we could not verify your password. ' .
                     'Please check that you typed it correctly and try again.'
                 );
@@ -115,11 +118,11 @@ final class ProfileController extends AbstractController
                 // Check for errors.
                 if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                     // If we encounter an error, give up.
-                    $this->addFlash('notice', 'Sorry, an error occured while ' . 
+                    $this->addFlash('notice', 'Sorry, an error occured while ' .
                     'trying to update your Wireguard peers. Please try again later.');
                     return $this->redirect($request->getUri());
                 }
-                
+
                 // Commit the changes.
                 $manager->flush();
                 $this->addFlash('notice', 'Profile updated successfully!');
@@ -133,7 +136,7 @@ final class ProfileController extends AbstractController
             if ($peerForm->isSubmitted() && $peerForm->isValid()) {
                 // Create the peer on the router
                 $tunnelNum = strval($user->getWireguardPeers()->count() + 1);
-                $response = $httpClient->request('POST', 
+                $response = $httpClient->request('POST',
                     "{$this->getParameter('app.router')}servers/1/gen_new_peer", [
                         'body' => [
                             'name' => "Tunnel $tunnelNum for member {$user->getUsername()}",
@@ -150,7 +153,7 @@ final class ProfileController extends AbstractController
                 if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                     // If we encounter an error, give up.
                     dd($response);
-                    $this->addFlash('notice', 'Sorry, an error occured while ' . 
+                    $this->addFlash('notice', 'Sorry, an error occured while ' .
                     'trying to update your Wireguard peers. Please try again later.');
                     return $this->redirect($request->getUri());
                 }
@@ -160,7 +163,7 @@ final class ProfileController extends AbstractController
                 if (isset($res['message'])) {
                     dd($response);
                     // If we encounter an error, give up.
-                    $this->addFlash('notice', 'Sorry, an error occured while ' . 
+                    $this->addFlash('notice', 'Sorry, an error occured while ' .
                     'trying to update your Wireguard peers. Please try again later.');
                     return $this->redirect($request->getUri());
                 }
@@ -184,6 +187,61 @@ final class ProfileController extends AbstractController
         return $this->render('profile/update.html.twig', [
             'form' => $form,
             'peerForm' => $peerForm
+        ]);
+    }
+
+    // Allows users to delete their own account.
+    #[Route('/profile/delete', name: 'app.profile.delete')]
+    public function delete(Request $request, EntityManagerInterface $manager,
+        UserPasswordHasherInterface $passwordHasher, HttpClientInterface $httpClient,
+        Security $security, TokenStorageInterface $tokenStorage) {
+        // Sensitive decision -- make sure the user is fully authenticated.
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        $form = $this->createForm(AccountDeleteFormType::class);
+
+        // Handle the deletion form.
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Make sure that they typed their current password correctly.
+            if (!$passwordHasher->isPasswordValid($this->getUser(), $form->get('password')->getData())) {
+                $this->addFlash('notice',
+                    'Sorry, we could not verify your password. ' .
+                    'Please check that you typed it correctly and try again.'
+                );
+                return $this->redirect($request->getUri());
+            }
+
+            // Well, they asked for it. Start by cleanin their Wireguard peers.
+            $errors = $this->getUser()->clean($httpClient, $manager,
+                $this->getParameter('app.router'), $this->getParameter('app.rtrApiKey'));
+
+            if (count($errors) > 0) {
+                $this->addFlash('notice',
+                    'Sorry, an error occured while trying to delete your account. ' .
+                    'Please try again later.'
+                );
+                return $this->redirect($request->getUri());
+            }
+
+            // All's gone well. Time to delete the user for real. Goodbye!
+            $user = $this->getUser();
+            // Workaround based on https://stackoverflow.com/questions/44740129/symfony3-how-to-delete-current-user-and-redirect-to-home
+            $request->getSession()->invalidate();
+            $tokenStorage->setToken(null);
+            $manager->remove($user);
+            $manager->flush();
+
+            $this->addFlash('notice', 'Your account was successfully deleted.');
+            $this->addFlash('notice', 'We hope to see you again soon!');
+            $this->addFlash('notice', '-The CGHMN Team.');
+
+            return $this->redirectToRoute('app.signup');
+        }
+
+        return $this->render('profile/delete.html.twig', [
+            'form' => $form,
         ]);
     }
 }

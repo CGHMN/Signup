@@ -7,10 +7,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validatior\Constraints as Assert;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -255,5 +257,53 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    // Helper function to clean a user (delete their Wireguard peers)
+    public function clean(HttpClientInterface $httpClient,
+        EntityManagerInterface $manager, string $routerAPI,
+        string $routerAPIkey): array {
+        // Log any errors we experience.
+        $errors = [];
+        // Get their Wireguard peers
+        $peers = $this->getWireguardPeers();
+
+        // Delete them.
+        foreach ($peers as $peer) {
+            // Delete the Wireguard peer from the router.
+            $response = $httpClient->request('DELETE',
+                "{$routerAPI}servers/1/peers/{$peer->getRouterID()}", [
+                    'headers' => [
+                        'X-API-Key' => $routerAPIkey,
+                    ],
+                    'timeout' => 5,
+                ]
+            );
+
+            // Check for errors.
+            if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                // Log the message and continue.
+                array_push($errors, $response->getHeaders(false)['status'][0]);
+                continue;
+            }
+
+            // If we didn't encounter any errors, delete the peer on our end.
+            $manager->remove($peer);
+        }
+
+        // We'll give them the courtesy of deleting the info we don't use
+        // to identify users.
+        // (ie: passwords, personal info)
+        // May change this later, depending on how we want to handle unbans.
+        $this->setPassword("none");
+        $this->setPlan("");
+        $this->setNeedsHosting(false);
+        $this->setHasExperience(false);
+        $this->setContactMethod("none");
+        $this->setContactDetails("");
+
+        // Flush the entity manager.
+        $manager->flush();
+        return $errors;
     }
 }

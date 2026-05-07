@@ -18,10 +18,9 @@
     <tr>
         <td>
             {{ form_label(form.email) }}
-            {{ form_errors(form.email) }}
         </td>
         <td>
-            {{ form_widget(form.email) }}
+            {{ form.email.vars.data }}
         </td>
     </tr>
     <tr>
@@ -118,15 +117,6 @@
             </tr>
         {% endfor %}
     {% endif %}
-    <tr>
-        <td>
-            {{ form_label(form.password, 'To confirm, please enter your password.') }}
-            {{ form_errors(form.password) }}
-        </td>
-        <td>
-            {{ form_widget(form.password) }}
-        </td>
-    </tr>
     <tr>
         <td colspan="2">
             {{ form_row(form.submit, {label: 'Update'}) }}

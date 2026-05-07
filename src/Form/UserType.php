@@ -44,12 +44,10 @@ class UserType extends AbstractType
             ]);
         }
 
-        // If a user/admin is updating their own info, they need to enter their password.
-        if ($options['update']) {
+        // If a user/admin is updating their password, they need to enter their current password.
+        if ($options['update'] === 'password') {
             $builder->add('password', PasswordType::class, [
-                'label' => ($options['update'] === 'password') ?
-                    'Please enter your current password.' :
-                    'Please enter your password.',
+                'label' => 'Please enter your current password.',
                 'constraints' => [
                     new NotBlank(
                         message: 'You must enter your password.',

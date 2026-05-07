@@ -5,6 +5,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,8 +30,6 @@ final class ProfileController extends AbstractController
     #[Route('/profile/password', name: 'app.profile.changePassword')]
     public function password(Request $request, EntityManagerInterface $manager,
         UserPasswordHasherInterface $passwordHasher, Security $security) {
-        // Sensitive info -- make sure the user is fully authenticated.
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         // Create the password update form.
         $user = $this->getUser();
@@ -69,10 +68,7 @@ final class ProfileController extends AbstractController
     // TODO: Add a new update page just for updating emails.
     #[Route('/profile/update', name: 'app.profile.update')]
     public function update(Request $request, EntityManagerInterface $manager,
-        UserPasswordHasherInterface $passwordHasher, HttpClientInterface $httpClient): Response {
-        // Sensitive info -- make sure the user is fully authenticated.
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-
+        HttpClientInterface $httpClient): Response {
         // Create the update form.
         $user = $this->getUser();
         $form = $this->createForm(UserType::class, $user, [
@@ -92,16 +88,7 @@ final class ProfileController extends AbstractController
         // Handle the update form
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            // Make sure that they typed their current password correctly.
-            if (!$passwordHasher->isPasswordValid($user, $form->get('password')->getData())) {
-                $this->addFlash('notice',
-                    'Sorry, we could not verify your password. ' .
-                    'Please check that you typed it correctly and try again.'
-                );
-                return $this->redirect($request->getUri());
-            }
-
-            // Update their Wireguard peer on the router.
+            // Update their Wireguard peers on the router.
             foreach ($form->get('wireguardPeers') as $peer) {
                 $response = $httpClient->request('PUT',
                     "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getRouterID()}", [
@@ -122,12 +109,12 @@ final class ProfileController extends AbstractController
                     'trying to update your Wireguard peers. Please try again later.');
                     return $this->redirect($request->getUri());
                 }
-
-                // Commit the changes.
-                $manager->flush();
-                $this->addFlash('notice', 'Profile updated successfully!');
-                return $this->redirect($request->getUri());
             }
+
+            // Commit the changes.
+            $manager->flush();
+            $this->addFlash('notice', 'Profile updated successfully!');
+            return $this->redirect($request->getUri());
         }
 
         // Handle the new peer form.
@@ -195,8 +182,6 @@ final class ProfileController extends AbstractController
     public function delete(Request $request, EntityManagerInterface $manager,
         UserPasswordHasherInterface $passwordHasher, HttpClientInterface $httpClient,
         Security $security, TokenStorageInterface $tokenStorage) {
-        // Sensitive decision -- make sure the user is fully authenticated.
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         $form = $this->createForm(AccountDeleteFormType::class);
 

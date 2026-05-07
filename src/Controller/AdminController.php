@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
@@ -181,10 +182,10 @@ final class AdminController extends AbstractController
 
     // Creation page for new admins
     #[Route('/admin/new', name: 'app.admin.new')]
+    #[IsGranted('ROLE_CREATE_ADMINS')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function newAdmin(Request $request, EntityManagerInterface $manager,
         UserPasswordHasherInterface $passwordHasher) {
-        $this->denyAccessUnlessGranted('ROLE_CREATE_ADMINS');
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         // This user will become the new admin.
         $newAdmin = new User();
         $form = $this->createForm(UserType::class, $newAdmin, [
@@ -218,6 +219,7 @@ final class AdminController extends AbstractController
 
     // Page for managing users. (Banning/Deleting/Etc)
     #[Route('/admin/users', name: 'app.admin.users')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function users(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
         MailerInterface $mailer, Security $security): Response {
@@ -330,9 +332,9 @@ final class AdminController extends AbstractController
 
     // More in depth user viewing.
     #[Route('/admin/users/{id<\d+>}', name: 'app.admin.users.view')]
-    public function editUser(User $user) {
+    public function editUser(User $user, Security $security) {
         // This page is only for normal users.
-        if (!in_array('ROLE_USER_APPROVED', $user->getRoles())) {
+        if ($security->isGrantedForUser($user, 'ROLE_USER_APPROVED')) {
             return $this->redirectToRoute('app.admin');
         }
 
@@ -345,7 +347,6 @@ final class AdminController extends AbstractController
     #[Route('/admin/email', name: 'app.admin.email')]
     public function email(Request $request, UserRepository $userRepository,
         MailerInterface $mailer, Security $security) {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $form = $this->createForm(MassEmailFormType::class);
 
         $form->handleRequest($request);
@@ -384,11 +385,11 @@ final class AdminController extends AbstractController
 
     // Page for managing admins (Ban/Delete/etc)
     #[Route('/admin/admins', name: 'app.admin.admins')]
+    #[IsGranted('ROLE_CREATE_ADMINS')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function admins(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
         MailerInterface $mailer, Security $security): Response {
-        $this->denyAccessUnlessGranted('ROLE_CREATE_ADMINS');
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         // Print out the list of admins.
         $requests = new Requests($userRepository, 'ROLE_ADMIN', $security);
         $form = $this->createForm(RequestCollectionType::class, $requests, [

@@ -449,6 +449,7 @@ final class AdminController extends AbstractController
 
         return $this->render('admin/admins.html.twig', [
             'form' => $form,
+            'security' => $security
         ]);
     }
 

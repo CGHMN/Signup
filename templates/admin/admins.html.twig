@@ -24,7 +24,7 @@
             <td>{{ request.vars.data.username }}</td>
             <td>{{ request.vars.data.email }}</td>
             <td>
-                {% if 'ROLE_CREATE_ADMINS' in request.vars.data.roles %}
+                {% if security.isGrantedForUser(request.vars.data, 'ROLE_CREATE_ADMINS') %}
                     Yes
                 {% else %}
                     No

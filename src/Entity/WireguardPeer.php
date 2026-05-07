@@ -43,7 +43,7 @@ class WireguardPeer
 
     #[ORM\Column(type: Types::BIGINT)]
     #[Assert\NotBlank]
-    private ?string $routerID = null;
+    private ?string $peerID = null;
 
     public function getId(): ?int
     {
@@ -110,14 +110,14 @@ class WireguardPeer
         return $this;
     }
 
-    public function getRouterID(): ?string
+    public function getpeerID(): ?string
     {
-        return $this->routerID;
+        return $this->peerID;
     }
 
-    public function setRouterID(string $routerID): static
+    public function setpeerID(string $peerID): static
     {
-        $this->routerID = $routerID;
+        $this->peerID = $peerID;
 
         return $this;
     }

@@ -91,7 +91,7 @@ final class ProfileController extends AbstractController
             // Update their Wireguard peers on the router.
             foreach ($form->get('wireguardPeers') as $peer) {
                 $response = $httpClient->request('PUT',
-                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getRouterID()}", [
+                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getPeerID()}", [
                         'json' => [
                             'public_key' => $peer->get('pubKey')->getData(),
                         ],
@@ -156,7 +156,7 @@ final class ProfileController extends AbstractController
                 }
 
                 // Set up the new WG peer
-                $newPeer->setRouterID($res['id']);
+                $newPeer->setPeerID($res['id']);
                 $newPeer->setTunnelIP($res['tunnel_ip']);
                 $newPeer->setAllowedIPs($res['allowed_ips']);
                 $newPeer->setPubKey($res['public_key']);

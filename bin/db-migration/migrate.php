@@ -171,9 +171,9 @@ if (!($curl_result = curl_exec($ch))) {
 // prepare peer insert statement
 $peer_insert_statement = $new_db_pdo->prepare(<<<SQL
 INSERT INTO wireguard_peer
-	(tunnel_ip, allowed_ips, pub_key, preshared_key, router_id, user_id)
+	(tunnel_ip, allowed_ips, pub_key, preshared_key, peer_id, user_id)
 VALUES
-	(:tunnel_ip, :allowed_ips, :pub_key, :preshared_key, :router_id, :user_id);
+	(:tunnel_ip, :allowed_ips, :pub_key, :preshared_key, :peer_id, :user_id);
 SQL);
 
 // fetch existing peers to prevent duplicate errors
@@ -205,7 +205,7 @@ foreach ($previous_peers as $peer) {
 		'allowed_ips' => json_encode($peer->allowed_ips),
 		'pub_key' => $peer->public_key,
 		'preshared_key' => $peer->preshared_key,
-		'router_id' => 0,
+		'peer_id' => $peer->id,
 		'user_id' => $mapped_user_id['id']
 	];
 

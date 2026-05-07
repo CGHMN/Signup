@@ -87,7 +87,7 @@ final class AdminController extends AbstractController
 
                         // Set up the new WG peer but don't persist it yet.
                         $peer = new WireguardPeer();
-                        $peer->setRouterID($res['id']);
+                        $peer->setPeerID($res['id']);
                         $peer->setTunnelIP($res['tunnel_ip']);
                         $peer->setAllowedIPs($res['allowed_ips']);
                         $peer->setPubKey($res['public_key']);
@@ -109,7 +109,7 @@ final class AdminController extends AbstractController
                             // Delete the orphaned WG peer and continue.
                             $message = $response->getHeaders(false)['status'][0];
                             $response = $httpClient->request('DELETE',
-                                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getRouterID()}", [
+                                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}", [
                                     'headers' => [
                                         'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                                     ],
@@ -254,7 +254,7 @@ final class AdminController extends AbstractController
                         // Get the example config
                         $config = null;
                         $response = $httpClient->request('GET',
-                            "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getRouterID()}/config", [
+                            "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}/config", [
                                 'headers' => [
                                     'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                                 ],

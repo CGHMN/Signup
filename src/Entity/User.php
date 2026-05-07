@@ -272,7 +272,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         foreach ($peers as $peer) {
             // Delete the Wireguard peer from the router.
             $response = $httpClient->request('DELETE',
-                "{$routerAPI}servers/{$routerID}/peers/{$peer->getRouterID()}", [
+                "{$routerAPI}servers/{$routerID}/peers/{$peer->getPeerID()}", [
                     'headers' => [
                         'X-API-Key' => $routerAPIkey,
                     ],

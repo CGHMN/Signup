@@ -93,7 +93,7 @@
                 <td>
                     {% set subnetNum = 0 %}
                     {% for subnet in peer.vars.data.allowedIPs %}
-                        {% if peer.allowedIPs|length - 1 > subnetNum %}
+                        {% if peer.vars.data.allowedIPs|length - 1 > subnetNum %}
                             {{ subnet.cidr }},
                         {% else %}
                             {{ subnet.cidr }}

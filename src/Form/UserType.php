@@ -112,7 +112,7 @@ class UserType extends AbstractType
                 $builder->add('pubKey', TextType::class, [
                     'constraints' => [
                         new Regex(
-                            pattern: '/^[a-z0-9\+\/]{43}=$/i',
+                            pattern: '/^[A-Za-z0-9+\/]{42}[AEIMQUYcgkosw480]=$/',
                             message: 'You must enter a valid WireGuard public key.',
                         ),
                         new NotBlank(

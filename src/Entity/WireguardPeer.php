@@ -33,7 +33,7 @@ class WireguardPeer
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^[a-z0-9\+\/]{43}=$/i', message: 'You must enter a valid WireGuard public key.')]
+    #[Assert\Regex(pattern: '/^[A-Za-z0-9+\/]{42}[AEIMQUYcgkosw480]=$/', message: 'You must enter a valid WireGuard public key.')]
     private ?string $pubKey = null;
 
     #[ORM\Column(type: Types::TEXT)]

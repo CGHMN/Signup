@@ -85,42 +85,60 @@ final class ProfileController extends AbstractController
             $peerForm = $this->createForm(WireguardPeerType::class, $newPeer);
         }
 
+        // Record the old peer public keys.
+        $oldPeers = [];
+        foreach ($this->getUser()->getWireguardPeers() as $peer) {
+            $oldPeers[$peer->getId()] = $peer->getPubKey();
+        }
+
         // Handle the update form
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             // Update their Wireguard peers on the router.
+            // TODO: Reloading the Wireguard server causes a brief connection disruption
+            // and this has no limiter on how quickly you can submit updates.
+            // Now, I'm not saying to add a limiter since that wouldn't really solve the problem.
+            // What we need is a worker that reloads the WG server, say, every 5 mins
+            // but only if a reload is required.
+            $reloadNeeded = false;
             foreach ($form->get('wireguardPeers') as $peer) {
-                $response = $httpClient->request('PUT',
-                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getPeerID()}", [
-                        'json' => [
-                            'public_key' => $peer->get('pubKey')->getData(),
-                        ],
+                // Don't bother updating the key if it hasn't changed.
+                if ($oldPeers[$peer->getData()->getId()] !== $peer->get('pubKey')->getData()) {
+                    $response = $httpClient->request('PUT',
+                        "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getData()->getPeerID()}", [
+                            'json' => [
+                                'public_key' => $peer->get('pubKey')->getData(),
+                            ],
+                            'headers' => [
+                                'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                            ],
+                            'timeout' => 5,
+                        ]
+                    );
+
+                    // Check for errors.
+                    if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                        // If we encounter an error, give up.
+                        $this->addFlash('notice', 'Sorry, an error occured while ' .
+                        'trying to update your Wireguard peers. Please try again later.');
+                        return $this->redirect($request->getUri());
+                    }
+                    $reloadNeeded = true;
+                }
+            }
+
+            // Reload the WG server so the new key takes effect.
+            // Don't care about the response.
+            if ($reloadNeeded) {
+                $response = $httpClient->request('POST',
+                    "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/reload", [
                         'headers' => [
                             'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                         ],
                         'timeout' => 5,
                     ]
                 );
-
-                // Check for errors.
-                if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
-                    // If we encounter an error, give up.
-                    $this->addFlash('notice', 'Sorry, an error occured while ' .
-                    'trying to update your Wireguard peers. Please try again later.');
-                    return $this->redirect($request->getUri());
-                }
             }
-
-            // Reload the WG server so the new key takes effect.
-            // Don't care about the response.
-            $response = $httpClient->request('POST',
-                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/reload", [
-                    'headers' => [
-                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
-                    ],
-                    'timeout' => 5,
-                ]
-            );
 
             // Commit the changes.
             $manager->flush();

@@ -85,7 +85,7 @@ class UserType extends AbstractType
 
         // If we're creating a new user/admin, or updating a user/admin's general profile,
         // show their email.
-        if (!$options['update'] || $options['update'] === 'profile') {
+        if (!$options['update']) {
             $builder->add('email', EmailType::class, [
                 'label' => 'Email Address',
                 'constraints' => [
@@ -102,7 +102,6 @@ class UserType extends AbstractType
                     ),
                 ],
                 'label_attr' => ['class' => 'required-opt'],
-                'disabled' => isset($options['update'])
             ]);
         }
 

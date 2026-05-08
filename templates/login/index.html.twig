@@ -3,6 +3,7 @@
 {% block title %}CGHMN Login{% endblock %}
 
 {% block body %}
+    {% include '_errors.html.twig' %}
     <form method="post">
         {% if error %}
             <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
@@ -32,5 +33,4 @@
     </form>
     <br>
     <p><a href="{{ path('app.forgotPasswordRequest') }}">I forgot my password.</a></p>
-    {% include '_errors.html.twig' %}
 {% endblock %}

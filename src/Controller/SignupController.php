@@ -21,6 +21,11 @@ final class SignupController extends AbstractController
 {
     #[Route('/', name: 'app.signup')]
     public function index(Request $request, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): Response {
+        // Redirect authenticated users to the next page.
+        if ($this->isGranted('IS_AUTHENTICATED')) {
+            return $this->redirectToRoute('app.next');
+        }
+
         $user = new User;
 
         // Create & handle the signup form

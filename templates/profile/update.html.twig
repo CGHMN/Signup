@@ -9,6 +9,7 @@
 
 {% block body %}
 {% include 'profile/_navbar.html.twig' %}
+
 <h3 class="form-header">Here you may update your profile.</h3>
 {{ form_start(form) }}
 <table class="data-table">
@@ -17,10 +18,10 @@
     </tr>
     <tr>
         <td>
-            {{ form_label(form.email) }}
+            Email Address
         </td>
         <td>
-            {{ form.email.vars.data }}
+            {{ app.user.email }}
         </td>
     </tr>
     <tr>
@@ -152,7 +153,5 @@
         </table>
     {{ form_end(peerForm) }}
 {% endif %}
-
-{% include '_errors.html.twig' %}
 
 {% endblock %}

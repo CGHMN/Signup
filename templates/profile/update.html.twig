@@ -91,14 +91,14 @@
             <tr>
                 <td>Routed Subnets</td>
                 <td>
-                    {% set firstSubnet = true %}
-                    {% for subnet in peer.vars.data.allowedIPs %}
-                        {% if firstSubnet %}
-                            {{ subnet.cidr }}
+                    {% set subnetNum = 0 %}
+                    {% for subnet in peer.allowedIPs %}
+                        {% if peer.allowedIPs|length - 1 > subnetNum %}
+                            {{ subnet.cidr }},
                         {% else %}
-                            ,{{ subnet.cidr }}
+                            {{ subnet.cidr }}
                         {% endif %}
-                        {% set firstSubnet = false %}
+                        {% set subnetNum = subnetNum + 1 %}
                     {% endfor %}
                 </td>
             </tr>

@@ -111,6 +111,17 @@ final class ProfileController extends AbstractController
                 }
             }
 
+            // Reload the WG server so the new key takes effect.
+            // Don't care about the response.
+            $response = $httpClient->request('POST',
+                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/reload", [
+                    'headers' => [
+                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                    ],
+                    'timeout' => 5,
+                ]
+            );
+
             // Commit the changes.
             $manager->flush();
             $this->addFlash('notice', 'Profile updated successfully!');
@@ -210,6 +221,17 @@ final class ProfileController extends AbstractController
                 );
                 return $this->redirect($request->getUri());
             }
+
+            // Reload the WG server so the peer changes take effect.
+            // Don't care about the response.
+            $response = $httpClient->request('POST',
+                "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/reload", [
+                    'headers' => [
+                        'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                    ],
+                    'timeout' => 5,
+                ]
+            );
 
             // All's gone well. Time to delete the user for real. Goodbye!
             $user = $this->getUser();

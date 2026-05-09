@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% set title = 'Peer Migration' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+{% include 'admin/_navbar.html.twig' %}
+
+<h3 class="form-header">Migrate a Wireguard Peer</h3>
+<div class="room">
+    <p>
+        This page can be used to migrate pre-signup page Wireguard peers,
+        assigning them to an existing user.<br>
+        Please enter the ID of the peer to migrate from the Wireguard server,
+        and the username of the user to assign the peer to.
+    </p>
+
+    {% form_theme form 'form_table_layout.html.twig' %}
+
+    {{ form(form) }}
+
+</div>
+
+{% endblock %}

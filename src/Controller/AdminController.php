@@ -15,6 +15,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\UserRepository;
+use App\Repository\WireguardPeerRepository;
 use App\Entity\Requests;
 use App\Entity\WireguardPeer;
 use App\Entity\User;
@@ -22,6 +23,7 @@ use App\Form\RequestCollectionType;
 use App\Form\UserType;
 use App\Form\WireguardPeerType;
 use App\Form\MassEmailFormType;
+use App\Form\PeerMigrateFormType;
 
 final class AdminController extends AbstractController
 {
@@ -252,7 +254,6 @@ final class AdminController extends AbstractController
                         // Resend the user's confirmation email.
                         $peer = $user->getWireguardPeers()[0];
                         // Get the example config
-                        $config = null;
                         $response = $httpClient->request('GET',
                             "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}/config", [
                                 'headers' => [
@@ -450,6 +451,95 @@ final class AdminController extends AbstractController
         return $this->render('admin/admins.html.twig', [
             'form' => $form,
             'security' => $security
+        ]);
+    }
+
+    // Page for assigning pre-signup page Wireguard peers to existing users.
+    #[Route('/admin/migrate', name: 'app.admin.migrate')]
+    public function migrate(Request $request, UserRepository $userRepository, 
+        WireguardPeerRepository $peerRepository,
+        HttpClientInterface $httpClient): Response {
+        // Create and handle the peer migration form.
+        $form = $this->createForm(PeerMigrateFormType::class);
+        $form->handleRequest($request);
+        
+        // Execute the requested migration
+        if ($form->isSubmitted() && $form->isValid()) {
+            $errors = [];
+            $id = null;
+            // Find the user to assign the peer to.
+            $username = $form->get('username')->getData();
+            $user = $userRepository->findOneByUsername($username);
+            if (!$user) {
+                // Can't migrate a peer to a user who doesn't exist.
+                array_push($errors, "User $username doesn't exist!");
+            } else {
+                // Check that the peer we're supposed to migrate isn't already assigned.
+                $id = $form->get('peer')->getData();
+                $peer = $peerRepository->findOneByPeerId($id);
+                if ($peer) {
+                    $this->addFlash('error',
+                        "Peer $id is already assigned to a user!"
+                    );
+                } else {
+                    // Query the Wireguard API to get the peer details.
+                    $response = $httpClient->request('GET',
+                        "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}", [
+                            'headers' => [
+                                'X-API-Key' => $this->getParameter('app.rtrApiKey'),
+                            ],
+                            'timeout' => 5,
+                        ]
+                    );
+
+                    // Make sure the request succeeded.
+                    if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
+                        // Log the errors and continue.
+                        array_push($errors, $response->getHeaders(false)['status'][0]);
+                    }
+                    // Decode the response from the server and create a Wireguard peer accordingly.
+                    $res = $response->toArray();
+                    if (isset($res['message'])) {
+                        // If there's an error message, log it.
+                        array_push($errors, $res['message']);
+                    } else {
+                        // Set up the WG peer object and assign it to the user.
+                        $peer = new WireguardPeer();
+                        $peer->setPeerID($res['id']);
+                        $peer->setTunnelIP($res['tunnel_ip']);
+                        $peer->setAllowedIPs($res['allowed_ips']);
+                        $peer->setPubKey($res['public_key']);
+                        // Most pre-signup page users have NULL preshared keys.
+                        // In this context, as far as I know, null is equivalent to
+                        // all zeros.
+                        if (!$res['preshared_key']) {
+                            $res['preshared_key'] = '0000000000000000000000000000000000000000000=';
+                        }
+                        $peer->setPresharedKey($res['preshared_key']);
+                        $peer->setUser($user);
+                        $manager->persist($peer);
+                        $manager->flush();
+                    }
+                }
+            }
+
+            if (count($errors) > 0) {
+                $this->addFlash('notice',
+                    'The following errors were encountered while attempting to ' .
+                    'migrate the Wireguard peer:'
+                );
+                foreach($errors as $error) {
+                    $this->addFlash('error', $error);
+                }
+            } else {
+                $this->addFlash('notice', "Peer $id migrated successfully!");
+            }
+
+            return $this->redirect($request->getUri());
+        }
+
+        return $this->render('admin/migrate.html.twig', [
+            'form' => $form
         ]);
     }
 

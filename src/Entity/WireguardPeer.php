@@ -38,7 +38,7 @@ class WireguardPeer
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^[a-z0-9\+\/]{43}=$/i', message: 'An invalid preshared key should not be possible...')]
+    #[Assert\Regex(pattern: '/^[A-Za-z0-9+\/]{42}[AEIMQUYcgkosw480]=$/', message: 'An invalid preshared key should not be possible...')]
     private ?string $presharedKey = null;
 
     #[ORM\Column(type: Types::BIGINT)]

@@ -16,6 +16,14 @@ class WireguardPeerRepository extends ServiceEntityRepository
         parent::__construct($registry, WireguardPeer::class);
     }
 
+    public function findOneByPeerId(int $value): ?WireguardPeer {
+        return $this->createQueryBuilder('w')
+           ->andWhere('w.peerID = :val')
+           ->setParameter('val', $value)
+           ->getQuery()
+           ->getOneOrNullResult();
+    }
+
     //    /**
     //     * @return WireguardPeer[] Returns an array of WireguardPeer objects
     //     */

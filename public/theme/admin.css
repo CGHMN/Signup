@@ -13,6 +13,7 @@ body {
 
 #menubar {
     position: sticky;
+    margin-top: 10px;
 }
 
 #menubar ol {

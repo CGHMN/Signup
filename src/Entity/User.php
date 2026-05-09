@@ -272,7 +272,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         foreach ($peers as $peer) {
             // Delete the Wireguard peer from the router.
             $response = $httpClient->request('DELETE',
-                "{$routerAPI}servers/{$routerID}/peers/{$peer->getPeerID()}", [
+                "{$routerAPI}servers/$routerID/peers/{$peer->getPeerID()}", [
                     'headers' => [
                         'X-API-Key' => $routerAPIkey,
                     ],
@@ -283,7 +283,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // Check for errors.
             if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                 // Log the message and continue.
-                array_push($errors, $response->getHeaders(false)['status'][0]);
+                try {
+                    array_push($errors, $response->getHeaders(false)['status'][0]);
+                } catch (Exception $e) {
+                    array_push($errors, $e->getMessage());
+                }
                 continue;
             }
 

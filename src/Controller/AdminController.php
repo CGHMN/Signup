@@ -76,7 +76,12 @@ final class AdminController extends AbstractController
                         // Check for errors.
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // Log the message and continue.
-                            array_push($errors, $response->getHeaders(false)['status'][0]);
+                            $headers = $response->getHeaders(false);
+                            if (array_key_exists('status', $headers)) {
+                                array_push($errors, $headers['status'][0]);
+                            } else {
+                                array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
+                            }
                             continue 2;
                         }
                         // Decode the response from the server.
@@ -109,7 +114,13 @@ final class AdminController extends AbstractController
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // This is bad. One router API request succeeded but not the other.
                             // Delete the orphaned WG peer and continue.
-                            $message = $response->getHeaders(false)['status'][0];
+                            $message = "";
+                            $headers = $response->getHeaders(false);
+                            if (array_key_exists('status', $headers)) {
+                                $message = $headers['status'][0];
+                            } else {
+                                array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
+                            }
                             $response = $httpClient->request('DELETE',
                                 "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}", [
                                     'headers' => [
@@ -265,7 +276,12 @@ final class AdminController extends AbstractController
                         // Make sure the request succeeded.
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // Log the errors and continue.
-                            array_push($errors, $response->getHeaders(false)['status'][0]);
+                            $headers = $response->getHeaders(false);
+                            if (array_key_exists('status', $headers)) {
+                                array_push($errors, $headers['status'][0]);
+                            } else {
+                                array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
+                            }
                             continue 2;
                         }
                         $config = $response->getContent();
@@ -495,30 +511,36 @@ final class AdminController extends AbstractController
                     // Make sure the request succeeded.
                     if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                         // Log the errors and continue.
-                        array_push($errors, $response->getHeaders(false)['status'][0]);
-                    }
-                    // Decode the response from the server and create a Wireguard peer accordingly.
-                    $res = $response->toArray();
-                    if (isset($res['message'])) {
-                        // If there's an error message, log it.
-                        array_push($errors, $res['message']);
-                    } else {
-                        // Set up the WG peer object and assign it to the user.
-                        $peer = new WireguardPeer();
-                        $peer->setPeerID($res['id']);
-                        $peer->setTunnelIP($res['tunnel_ip']);
-                        $peer->setAllowedIPs($res['allowed_ips']);
-                        $peer->setPubKey($res['public_key']);
-                        // Most pre-signup page users have NULL preshared keys.
-                        // In this context, as far as I know, null is equivalent to
-                        // all zeros.
-                        if (!$res['preshared_key']) {
-                            $res['preshared_key'] = '0000000000000000000000000000000000000000000=';
+                        $headers = $response->getHeaders(false);
+                        if (array_key_exists('status', $headers)) {
+                            array_push($errors, $headers['status'][0]);
+                        } else {
+                            array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
                         }
-                        $peer->setPresharedKey($res['preshared_key']);
-                        $peer->setUser($user);
-                        $manager->persist($peer);
-                        $manager->flush();
+                    } else {
+                        // Decode the response from the server and create a Wireguard peer accordingly.
+                        $res = $response->toArray();
+                        if (isset($res['message'])) {
+                            // If there's an error message, log it.
+                            array_push($errors, $res['message']);
+                        } else {
+                            // Set up the WG peer object and assign it to the user.
+                            $peer = new WireguardPeer();
+                            $peer->setPeerID($res['id']);
+                            $peer->setTunnelIP($res['tunnel_ip']);
+                            $peer->setAllowedIPs($res['allowed_ips']);
+                            $peer->setPubKey($res['public_key']);
+                            // Most pre-signup page users have NULL preshared keys.
+                            // In this context, as far as I know, null is equivalent to
+                            // all zeros.
+                            if (!$res['preshared_key']) {
+                                $res['preshared_key'] = '0000000000000000000000000000000000000000000=';
+                            }
+                            $peer->setPresharedKey($res['preshared_key']);
+                            $peer->setUser($user);
+                            $manager->persist($peer);
+                            $manager->flush();
+                        }
                     }
                 }
             }

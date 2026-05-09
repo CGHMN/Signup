@@ -168,7 +168,6 @@ final class ProfileController extends AbstractController
                 // Check for errors.
                 if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                     // If we encounter an error, give up.
-                    dd($response);
                     $this->addFlash('notice', 'Sorry, an error occured while ' .
                     'trying to update your Wireguard peers. Please try again later.');
                     return $this->redirect($request->getUri());
@@ -177,7 +176,6 @@ final class ProfileController extends AbstractController
                 // Decode the response from the server.
                 $res = $response->toArray();
                 if (isset($res['message'])) {
-                    dd($response);
                     // If we encounter an error, give up.
                     $this->addFlash('notice', 'Sorry, an error occured while ' .
                     'trying to update your Wireguard peers. Please try again later.');

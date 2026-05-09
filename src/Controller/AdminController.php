@@ -457,7 +457,7 @@ final class AdminController extends AbstractController
     // Page for assigning pre-signup page Wireguard peers to existing users.
     #[Route('/admin/migrate', name: 'app.admin.migrate')]
     public function migrate(Request $request, UserRepository $userRepository, 
-        WireguardPeerRepository $peerRepository,
+        WireguardPeerRepository $peerRepository, EntityManagerInterface $manager,
         HttpClientInterface $httpClient): Response {
         // Create and handle the peer migration form.
         $form = $this->createForm(PeerMigrateFormType::class);
@@ -484,7 +484,7 @@ final class AdminController extends AbstractController
                 } else {
                     // Query the Wireguard API to get the peer details.
                     $response = $httpClient->request('GET',
-                        "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/{$peer->getPeerID()}", [
+                        "{$this->getParameter('app.router')}servers/{$this->getParameter('app.routerID')}/peers/$id", [
                             'headers' => [
                                 'X-API-Key' => $this->getParameter('app.rtrApiKey'),
                             ],

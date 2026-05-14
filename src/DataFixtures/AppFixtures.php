@@ -1,5 +1,25 @@
 <?php
 
+/*
+CGHMN Signup Page - A PHP project to ease the process of joining CGHMN.
+Copyright (C) 2026 Logan C. et al. loganius@cghmn.org
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Many thanks to Jonas Luehrig (Snep) for all his contributions to this project,
+both through writing code and providing advice.
+*/
+
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -13,7 +33,7 @@ class AppFixtures extends Fixture
         $user = new User;
         $user->setUsername("Testing");
         $user->setPassword(password_hash("12345", PASSWORD_BCRYPT));
-        $user->setEmail("basiclogan@outlook.com");
+        $user->setEmail("loganius@cghmn.org");
         $user->setPubKey("xFfymVxpEAaUmTFl238AnkQTnNiyRgsB8MefesqLkVc=");
         $user->setPlan("trollollolloll");
         $user->setRoles(['ROLE_USER_PENDING']);

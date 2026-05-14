@@ -77,7 +77,7 @@ final class AdminController extends AbstractController
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // Log the message and continue.
                             $headers = $response->getHeaders(false);
-                            if (array_key_exists('status', $headers)) {
+                            if (isset($headers['status'])) {
                                 array_push($errors, $headers['status'][0]);
                             } else {
                                 array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
@@ -116,7 +116,7 @@ final class AdminController extends AbstractController
                             // Delete the orphaned WG peer and continue.
                             $message = "";
                             $headers = $response->getHeaders(false);
-                            if (array_key_exists('status', $headers)) {
+                            if (isset($headers['status'])) {
                                 $message = $headers['status'][0];
                             } else {
                                 array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
@@ -277,7 +277,7 @@ final class AdminController extends AbstractController
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                             // Log the errors and continue.
                             $headers = $response->getHeaders(false);
-                            if (array_key_exists('status', $headers)) {
+                            if (isset($headers['status'])) {
                                 array_push($errors, $headers['status'][0]);
                             } else {
                                 array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
@@ -512,10 +512,10 @@ final class AdminController extends AbstractController
                     if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299) {
                         // Log the errors and continue.
                         $headers = $response->getHeaders(false);
-                        if (array_key_exists('status', $headers)) {
+                        if (isset($headers['status'])) {
                             array_push($errors, $headers['status'][0]);
                         } else {
-                            array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}");
+                            array_push($errors, "The Wireguard server returned code {$response->getStatusCode()}.");
                         }
                     } else {
                         // Decode the response from the server and create a Wireguard peer accordingly.

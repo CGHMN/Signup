@@ -252,7 +252,6 @@ final class AdminController extends AbstractController
 
     // Page for managing users. (Banning/Deleting/Etc)
     #[Route('/admin/users', name: 'app.admin.users')]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function users(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
         MailerInterface $mailer, Security $security): Response {

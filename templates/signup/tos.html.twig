@@ -1,0 +1,61 @@
+{#
+CGHMN Signup Page - A PHP project to ease the process of joining CGHMN.
+Copyright (C) 2026 Logan C. et al. loganius@cghmn.org
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Many thanks to Jonas Luehrig (Snep) for all his contributions to this project,
+both through writing code and providing advice.
+#}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}CGHMN TOS{% endblock %}
+
+{% block body %}
+<div class="room">
+    <h1>Terms of Service</h1>
+    <ul>
+        <li>Don't be a dick to others.</li>
+        <li>
+            Generative AI will not be tolerated. 
+            See our <a href="https://wiki.cursedsilicon.net/wiki/AI_Policy">AI policy</a>
+            for more information.
+        </li>
+        <li>Don't do crimes.</li>
+        <li>NO NAZIS.</li>
+        <li>Users have the right to determine how the services they provide are used.
+            You must follow any and all such restrictions imposed.
+        </li>
+        <li>
+            We make no commitments with regard to uptime of services,
+            availability of or access to services, and all CGHMN services
+            are provided without any warranty.
+        </li>
+        <li>
+            We reserve the right to change the terms at any time, for any reason.
+            (with no less than 14 days notice).<br>
+            Notice shall be delivered via email and Discord/IRC and contain
+            a list of changes and a date the new terms go into effect.
+        </li>
+        <li>
+            We reserve the right to terminate your access to CGHMN at any time,
+            for any reason.
+        </li>
+    </ul>
+    <h2>
+        Failure to comply with these terms may result in your access to
+        CGHMN being terminated.
+    </h2>
+</div>
+{% endblock %}

@@ -201,6 +201,21 @@ class UserType extends AbstractType
         }
 
         // If we're creating a new user, or updating a user's general profile,
+        // show the prompt for whether they want their IP to be displayed publicly.
+        if ((!$options['update'] || $options['update'] === 'profile') && $options['type'] === 'user') {
+            $builder->add('display', ChoiceType::class, [
+                'label' => "Do you want your CGHMN IP allocations to be displayed publicly?",
+                'choices' => [
+                    'Yes' => true,
+                    'No' => false,
+                ],
+                'expanded' => true,
+                'multiple' => false,
+                'required' => true,
+            ]);
+        }
+
+        // If we're creating a new user, or updating a user's general profile,
         // show their contact method & info.
         if (!$options['update'] || $options['update'] === 'profile') {
             $builder->add('contactMethod', ChoiceType::class, [
@@ -221,6 +236,22 @@ class UserType extends AbstractType
             $builder->add('contactDetails', TextareaType::class, [
                 'required' => false,
                 'label' => $options['detailsLabel'],
+            ]);
+        }
+        
+        // Make them agree to TOS
+        // show their contact method & info.
+        if (!$options['update']) {
+            $builder->add('TOS', CheckboxType::class, [
+                'label' => 'I have read and agree to the CGHMN Terms of Service (found by clicking on this text).',
+                'label_attr' => ['class' => 'required-opt'],
+                'mapped' => false,
+                'required' => true,
+                'constraints' => [
+                    new NotBlank(
+                        message: 'You must agree to the Terms of Service.',
+                    ),
+                ],
             ]);
         }
 

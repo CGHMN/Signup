@@ -34,7 +34,7 @@ both through writing code and providing advice.
 {{ form_start(form) }}
 <table class="data-table">
     <tr>
-        <th colspan="2" ><b>Contact Info</b></td>
+        <th colspan="2"><b>Contact Info</b></th>
     </tr>
     <tr>
         <td>
@@ -64,7 +64,7 @@ both through writing code and providing advice.
     </tr>
     {% if not is_granted('ROLE_ADMIN') %}
         <tr>
-            <td colspan="2" ><b>About You</b></td>
+            <th colspan="2"><b>About You</b></th>
         </tr>
         <tr>
             <td>
@@ -95,15 +95,22 @@ both through writing code and providing advice.
             </td>
         </tr>
         <tr>
-            <td><b>Wireguard Peers</b></td>
-            <td></td>
+            <th colspan="2"><b>Wireguard Peers</b></th>
+        </tr>
+        <tr>
+            <td>
+                {{ form_label(form.display) }}
+                {{ form_errors(form.display) }}
+            </td>
+            <td>
+                {{ form_widget(form.display) }}
+            </td>
         </tr>
         {% set peerNum = 0 %}
         {% for peer in form.wireguardPeers %}
             {% set peerNum = peerNum + 1 %}
             <tr>
-                <td>Wireguard Peer {{ peerNum }}</td>
-                <td></td>
+                <td colspan="2">Wireguard Peer {{ peerNum }}</td>
             </tr>
             <tr>
                 <td>Tunnel IP</td>
@@ -165,10 +172,9 @@ both through writing code and providing advice.
                 </td>
             </tr>
             <tr>
-                <td>
+                <td colspan="2">
                     {{ form_row(peerForm.submit) }}
                 </td>
-                <td></td>
             </tr>
         </table>
     {{ form_end(peerForm) }}

@@ -18,26 +18,19 @@ Many thanks to Jonas Luehrig (Snep) for all his contributions to this project,
 both through writing code and providing advice.
 #}
 
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}
-        {% endblock %}
+{% extends 'base.html.twig' %}
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-        <div class="room">
-            {% if app.user %}
-                <p>You are logged in as {{ app.user.userIdentifier }}.
-                <a href="{{ logout_path() }}">Logout</a>
-            {% endif %}
-            <p>Copyright (C) 2025-2026 CGHMN. GPLv3 or later.</p>
-        </div>
-    </body>
-</html>
+{% block title %}CGHMN Statistics{% endblock %}
+
+{% block body %}
+
+<div class="room">
+    <h1>CGHMN Statistics</h1>
+    <p>Here you can view statistics about the Compu-Global-Hyper-Mega-Net.</p>
+    <ul>
+        <li><a href="{{ path('app.stats.allocations') }}">IP Allocations</a></li>
+    </ul>
+</div>
+
+{% include '_errors.html.twig' %}
+{% endblock %}

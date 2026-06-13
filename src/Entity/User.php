@@ -98,6 +98,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: WireguardPeer::class, mappedBy: 'user', orphanRemoval: false)]
     private Collection $wireguardPeers;
 
+    #[ORM\Column(options: ['default' => true])]
+    private ?bool $display = true;
+
     public function __construct()
     {
         $this->wireguardPeers = new ArrayCollection();
@@ -329,5 +332,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // Flush the entity manager.
         $manager->flush();
         return $errors;
+    }
+
+    public function isDisplay(): ?bool
+    {
+        return $this->display;
+    }
+
+    public function setDisplay(bool $display): static
+    {
+        $this->display = $display;
+
+        return $this;
     }
 }

@@ -18,26 +18,27 @@ Many thanks to Jonas Luehrig (Snep) for all his contributions to this project,
 both through writing code and providing advice.
 #}
 
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}
-        {% endblock %}
+{% set pages = [
+    {'name': 'Stats', 'route': 'app.stats'},
+    {'name': 'IPs', 'route': 'app.stats.allocations'},
+] %}
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-        <div class="room">
-            {% if app.user %}
-                <p>You are logged in as {{ app.user.userIdentifier }}.
-                <a href="{{ logout_path() }}">Logout</a>
-            {% endif %}
-            <p>Copyright (C) 2025-2026 CGHMN. GPLv3 or later.</p>
-        </div>
-    </body>
-</html>
+{% block stylesheets %}
+<link rel="stylesheet" href="/theme/admin.css">
+{% endblock %}
+
+<div id="topbar">
+    <h1 id="titlebar">{{ title }}</h1>
+    <nav id="menubar">
+        <ol>
+            {% for page in pages %}
+                <a class="menu-item" href="{{ path(page.route) }}">
+                    <li>{{ page.name }}</li>
+                </a>
+            {% endfor %}
+        </ol>
+    </nav>
+</div>
+
+{# Display the notice/error list #}
+{% include '_errors.html.twig' %}

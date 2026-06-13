@@ -145,4 +145,9 @@ final class SignupController extends AbstractController
     public function help(): Response {
         return $this->render('signup/help.html.twig');
     }
+
+    #[Route('/terms-of-service', name: 'app.tos')]
+    public function tos(): Response {
+        return $this->render('signup/tos.html.twig');
+    }
 }

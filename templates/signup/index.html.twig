@@ -65,6 +65,7 @@ both through writing code and providing advice.
         <br>
         {{ form_widget(form.plan) }}
         <br>
+        <br>
         {{ form_label(form.needsHosting, 'Will you need server hosting from CGHMN?') }}
         <br>
         <span>(vs running your own servers)</span>
@@ -73,11 +74,20 @@ both through writing code and providing advice.
         {{ form_widget(form.needsHosting) }}
         <br>
         {{ form_row(form.hasExperience) }}
+        <br>
+        {{ form_row(form.display) }}
+        <br>
         {{ form_row(form.contactMethod) }}
         <p>
-            If you selected "Discord" above, please <a href="https://discord.gg/VdYxWGFFAT">click here to join our Discord server</a>.
+            If you selected "Discord" above, please <a href="https://discord.gg/VdYxWGFFAT">click here</a> to join our Discord server.
         </p>
         {{ form_row(form.contactDetails) }}
+        <br>
+        <a href="{{ path('app.tos') }}">{{ form_label(form.TOS) }}</a>
+        {{ form_widget(form.TOS) }}
+        <br>
+        {{ form_errors(form.TOS) }}
+        <br>
         {{ form_row(form.submit, {'label': 'Submit Request'}) }}
 
     {{ form_end(form) }}

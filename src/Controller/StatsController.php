@@ -41,11 +41,15 @@ final class StatsController extends AbstractController {
     public function allocations(UserRepository $userRepository, Security $security): Response {
         $users = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
         $allocs = [];
+        // Count the users we're actually showing so we can add that as a statistic.
         $userCount = 0;
+        // Iterate through all the users and get their Wireguard peers
+        // so we can sort them later and display them in order.
         foreach ($users->getRequests() as $user) {
             if ($user->isDisplay()) {
                 $userCount++;
                 foreach ($user->getWireguardPeers() as $peer) {
+                    // Regex to remove the CIDR notation from the tunnel IP.
                     $matches;
                     preg_match('/([\d\.]*)(?:\/\d+)?/', $peer->getTunnelIP(), $matches);
                     if (count($matches) != 0) {
@@ -61,6 +65,8 @@ final class StatsController extends AbstractController {
             }
         }
 
+        // Convert their tunnel IPs to numbers and compare them so we can sort
+        // by tunnel IP in ascending order.
         usort($allocs, function($a, $b) {
             return ip2long($a['tunnelIP']) - ip2long($b['tunnelIP']);
         });

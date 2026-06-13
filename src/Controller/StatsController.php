@@ -31,8 +31,7 @@ use App\Repository\UserRepository;
 use App\Entity\Requests;
 use App\Entity\User;
 
-final class StatsController extends AbstractController
-{
+final class StatsController extends AbstractController {
     #[Route('/stats', name: 'app.stats')]
     public function index(): Response {
         return $this->render('stats/index.html.twig');
@@ -40,9 +39,36 @@ final class StatsController extends AbstractController
 
     #[Route('/stats/allocations', name: 'app.stats.allocations')]
     public function allocations(UserRepository $userRepository, Security $security): Response {
-        $requests = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
+        $users = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
+        $allocs = [];
+        $userCount = 0;
+        foreach ($users->getRequests() as $user) {
+            if ($user->isDisplay()) {
+                $userCount++;
+                foreach ($user->getWireguardPeers() as $peer) {
+                    $matches;
+                    preg_match('/([\d\.]*)(?:\/\d+)?/', $peer->getTunnelIP(), $matches);
+                    if (count($matches) != 0) {
+                        array_push(
+                            $allocs, [
+                                'username' => $user->getUsername(),
+                                'tunnelIP' => $matches[1],
+                                'subnets' => $peer->getAllowedIPs()
+                            ],
+                        );
+                    }
+                }
+            }
+        }
+
+        usort($allocs, function($a, $b) {
+            return ip2long($a->tunnelIP) - ip2long($b->tunnelIP);
+        });
+
         return $this->render('stats/allocations.html.twig', [
-            'requests' => $requests,
+            'allocs' => $allocs,
+            'totalUsers' => $users->getRequests()->count(),
+            'users' => $userCount,
         ]);
     }
 }

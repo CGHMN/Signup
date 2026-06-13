@@ -26,7 +26,6 @@ both through writing code and providing advice.
 {% block body %}
 {% include 'stats/_navbar.html.twig' %}
 
-{% set users = 0 %}
 <table class="data-table">
     <tr>
         <th>Username</th>
@@ -34,32 +33,27 @@ both through writing code and providing advice.
         <th>Routed Subnet(s)</th>
     </tr>
     {# Each allocation is displayed as a row in the table. #}
-    {% for user in requests.requests %}
-        {% if user.display %}
-            {% set users = users + 1 %}
-            {% for peer in user.wireguardPeers %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ peer.tunnelIP }}</td>
-                    <td>
-                        {% set subnetNum = 0 %}
-                        {% for subnet in peer.allowedIPs %}
-                            {% if peer.allowedIPs|length - 1 > subnetNum %}
-                                {{ subnet.cidr }},
-                            {% else %}
-                                {{ subnet.cidr }}
-                            {% endif %}
-                            {% set subnetNum = subnetNum + 1 %}
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        {% endif %}
+    {% for alloc in allocs %}
+        <tr>
+            <td>{{ alloc.username }}</td>
+            <td>{{ alloc.tunnelIP }}</td>
+            <td>
+                {% set subnetNum = 0 %}
+                {% for subnet in alloc.subnets %}
+                    {% if alloc.subnets|length - 1 > subnetNum %}
+                        {{ subnet.cidr }},
+                    {% else %}
+                        {{ subnet.cidr }}
+                    {% endif %}
+                    {% set subnetNum = subnetNum + 1 %}
+                {% endfor %}
+            </td>
+        </tr>
     {% endfor %}
 </table>
 
 <div class="room">
-    <h3>Total user count: {{ requests.requests.count }}</h3>
+    <h3>Total user count: {{ totalUsers }}</h3>
     <p><i>Users displayed: {{ users }}</i></p>
 </div>
 

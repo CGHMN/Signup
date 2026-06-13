@@ -62,7 +62,7 @@ final class StatsController extends AbstractController {
         }
 
         usort($allocs, function($a, $b) {
-            return ip2long($a->tunnelIP) - ip2long($b->tunnelIP);
+            return ip2long($a['tunnelIP']) - ip2long($b['tunnelIP']);
         });
 
         return $this->render('stats/allocations.html.twig', [

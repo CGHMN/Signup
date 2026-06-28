@@ -1,0 +1,64 @@
+{#
+CGHMN Signup Page - A PHP project to ease the process of joining CGHMN.
+Copyright (C) 2026 Logan C. et al. loganius@cghmn.org
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Many thanks to Jonas Luehrig (Snep) for all his contributions to this project,
+both through writing code and providing advice.
+#}
+
+{% extends 'base.html.twig' %}
+
+{% set title = 'CGHMN IP Allocations' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+{% include 'admin/_navbar.html.twig' %}
+
+<table class="data-table">
+    <tr>
+        <th>Username</th>
+        <th>Tunnel IP</th>
+        <th>Routed Subnet(s)</th>
+    </tr>
+    {# Each allocation is displayed as a row in the table. #}
+    {% for alloc in allocs %}
+        <tr>
+            <td>
+                <a href="{{ path(name = 'app.admin.users.view', parameters = {id: alloc.id}, relative = true) }}">
+                    {{ alloc.username }}
+                </a>
+            </td>
+            <td>{{ alloc.tunnelIP }}</td>
+            <td>
+                {% set subnetNum = 0 %}
+                {% for subnet in alloc.subnets %}
+                    {% if alloc.subnets|length - 1 > subnetNum %}
+                        {{ subnet.cidr }},
+                    {% else %}
+                        {{ subnet.cidr }}
+                    {% endif %}
+                    {% set subnetNum = subnetNum + 1 %}
+                {% endfor %}
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+
+<div class="room">
+    <h3 margin="10px 0">Total user count: {{ totalUsers }}</h3>
+</div>
+
+{% include '_errors.html.twig' %}
+{% endblock %}

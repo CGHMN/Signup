@@ -44,7 +44,7 @@ both through writing code and providing advice.
     {% for request in form.requests %}
         <tr>
             <td>
-                <a href="{{ path(name = 'app.admin.users.view', parameters = {id: request.vars.data.id}, relative = false) }}">
+                <a href="{{ path(name = 'app.admin.users.view', parameters = {id: request.vars.data.id}, relative = true) }}">
                     {{ request.vars.data.username }}
                 </a>
             </td>

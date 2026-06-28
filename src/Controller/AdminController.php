@@ -584,6 +584,43 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    // Page for viewing what IPs belong to which users.
+    #[Route('/admin/ips', name: 'app.admin.ips')]
+    public function ips(UserRepository $userRepository, Security $security): Response {
+        $users = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
+        $allocs = [];
+        // Iterate through all the users and get their Wireguard peers
+        // so we can sort them later and display them in order.
+        foreach ($users->getRequests() as $user) {
+            foreach ($user->getWireguardPeers() as $peer) {
+                // Regex to remove the CIDR notation from the tunnel IP.
+                $matches;
+                preg_match('/([\d\.]*)(?:\/\d+)?/', $peer->getTunnelIP(), $matches);
+                if (count($matches) != 0) {
+                    array_push(
+                        $allocs, [
+                            'username' => $user->getUsername(),
+                            'tunnelIP' => $matches[1],
+                            'subnets' => $peer->getAllowedIPs(),
+                            'id' => $user->getId(),
+                        ],
+                    );
+                }
+            }
+        }
+
+        // Convert their tunnel IPs to numbers and compare them so we can sort
+        // by tunnel IP in ascending order.
+        usort($allocs, function($a, $b) {
+            return ip2long($a['tunnelIP']) - ip2long($b['tunnelIP']);
+        });
+
+        return $this->render('admin/ips.html.twig', [
+            'allocs' => $allocs,
+            'totalUsers' => $users->getRequests()->count(),
+        ]);
+    }
+
     // Helper function to send confirmation emails
     private function sendConfirmationEmail(User $user, WireguardPeer $peer,
         string $exampleConfig, MailerInterface $mailer): void {

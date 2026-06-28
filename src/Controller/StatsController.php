@@ -46,7 +46,7 @@ final class StatsController extends AbstractController {
         // Iterate through all the users and get their Wireguard peers
         // so we can sort them later and display them in order.
         foreach ($users->getRequests() as $user) {
-            if ($user->isDisplay()) {
+            if ($user->isDisplay() || $this->isGranted('ROLE_ADMIN')) {
                 $userCount++;
                 foreach ($user->getWireguardPeers() as $peer) {
                     // Regex to remove the CIDR notation from the tunnel IP.

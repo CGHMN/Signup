@@ -638,8 +638,12 @@ final class AdminController extends AbstractController
             "you can find some beginner-friendly instructions at:\r\n" .
             "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
             "If you need help with anything,\r\n" .
-            "feel free to reach out at\r\n" .
-            $this->getParameter('app.contactEmail') .
+            "feel free to reach out at " .
+            $this->getParameter('app.contactEmail') . "\r\n".
+            "Once you're connected, you should first visit " .
+            "http://landingpage.retro/\r\n" .
+            "where you can find a plethora of services, tutorials, and " .
+            "other information\r\nperfect for newcomers.\r\n" .
             "Have fun!\r\n" .
             "-The CGHMN Team";
         $email = (new Email())

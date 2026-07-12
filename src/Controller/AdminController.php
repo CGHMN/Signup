@@ -639,7 +639,7 @@ final class AdminController extends AbstractController
             "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
             "If you need help with anything,\r\n" .
             "feel free to reach out at " .
-            $this->getParameter('app.contactEmail') . "\r\n".
+            $this->getParameter('app.contactEmail') . "\r\n" .
             "Once you're connected, you should first visit " .
             "http://landingpage.retro/\r\n" .
             "where you can find a plethora of services, tutorials, and " .

@@ -399,18 +399,33 @@ final class AdminController extends AbstractController
 
             // Now, SEND!
             $emailsSent = 0;
+            $errors = [];
             foreach ($users as $user) {
-                $email = (new Email())
-                    ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
-                    ->to($user->getEmail())
-                    ->subject($subject)
-                    ->text($body);
-                $mailer->send($email);
-                $emailsSent++;
+                // Turns out broken email addresses break this.
+                try {
+                    $email = (new Email())
+                        ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
+                        ->to($user->getEmail())
+                        ->subject($subject)
+                        ->text($body);
+                    $mailer->send($email);
+                    $emailsSent++;
+                } catch (Exception $e) {
+                    array_push($emailsFailed, $e->getMessage());
+                }
             }
             $this->addFlash('notice',
                 "Successfully sent emails to $emailsSent users.",
             );
+            if (count($errors) > 0) {
+                $this->addFlash('notice',
+                    'However, the following errors were encountered ' .
+                    'while attempting to execute the requested actions:'
+                );
+                foreach($errors as $error) {
+                    $this->addFlash('error', $error);
+                }
+            }
             return $this->redirect($request->getUri());
         }
 

@@ -166,7 +166,12 @@ final class AdminController extends AbstractController
                         $manager->persist($peer);
                         $user->setRoles(['ROLE_USER_APPROVED']);
                         $usersApproved++;
-                        $this->sendConfirmationEmail($user, $peer, $config, $mailer);
+                        try {
+                            $this->sendConfirmationEmail($user, $peer, $config, $mailer);
+                            $emailsSent++;
+                        } catch (\Throwable $e) {
+                            array_push($errors, $e->getMessage());
+                        }
                         break;
                     case 2:
                         $user->setRoles(['ROLE_USER_REJECTED']);
@@ -306,8 +311,12 @@ final class AdminController extends AbstractController
                         $config = $response->getContent();
 
                         // Send the confirmation email.
-                        $this->sendConfirmationEmail($user, $peer, $config, $mailer);
-                        $emailsSent++;
+                        try {
+                            $this->sendConfirmationEmail($user, $peer, $config, $mailer);
+                            $emailsSent++;
+                        } catch (\Throwable $e) {
+                            array_push($errors, $e->getMessage());
+                        }
                         break;
                     case 2:
                         // Delete the users Wireguard peers
@@ -420,7 +429,7 @@ final class AdminController extends AbstractController
                         ->text($body);
                     $mailer->send($email);
                     $emailsSent++;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     array_push($emailsFailed, $e->getMessage());
                 }
             }

@@ -1,6 +1,6 @@
 framework:
     rate_limiter:
         email_limit:
-            policy: 'sliding_window_window'
+            policy: 'sliding_window'
             limit: 50
             interval: '60 minutes'

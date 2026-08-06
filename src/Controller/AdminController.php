@@ -384,9 +384,19 @@ final class AdminController extends AbstractController
     public function email(Request $request, UserRepository $userRepository,
         MailerInterface $mailer, Security $security) {
         $form = $this->createForm(MassEmailFormType::class);
-
         $form->handleRequest($request);
+
         if ($form->isSubmitted() && $form->isValid()) {
+            // Check that it's been at least 30s since the last email was sent.
+            $session = $request->getSession();
+            $lastMail = $session->get('lastMail');
+            if ($lastMail !== null && $lastMail > time()) {
+                $this->addFlash('notice', 'You must wait at least 30s between emails.');
+                return $this->redirect($request->getUri());
+            }
+            // Update the time at which this user last sent an email.
+            $session->set('lastMail', time() + 30);
+
             // Let's send an email to every approved user on CGHMN!
             // First, get the list of users.
             $users = (new Requests($userRepository, 'ROLE_USER_APPROVED', $security))->getRequests();

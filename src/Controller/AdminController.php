@@ -31,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
@@ -50,7 +52,7 @@ final class AdminController extends AbstractController
     #[Route('/admin', name: 'app.admin')]
     public function index(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer, Security $security): Response {
+        TransportInterface $mailer, Security $security): Response {
         // Print out the list of requests.
         $requests = new Requests($userRepository, 'ROLE_USER_PENDING', $security);
 
@@ -168,8 +170,7 @@ final class AdminController extends AbstractController
                         $usersApproved++;
                         try {
                             $this->sendConfirmationEmail($user, $peer, $config, $mailer);
-                            $emailsSent++;
-                        } catch (\Throwable $e) {
+                        } catch (TransportExceptionInterface $e) {
                             array_push($errors, $e->getMessage());
                         }
                         break;
@@ -259,7 +260,7 @@ final class AdminController extends AbstractController
     #[Route('/admin/users', name: 'app.admin.users')]
     public function users(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer, Security $security): Response {
+        TransportInterface $mailer, Security $security): Response {
         // Print out the list of users.
         $requests = new Requests($userRepository, 'ROLE_USER_APPROVED', $security);
         $form = $this->createForm(RequestCollectionType::class, $requests, [
@@ -314,7 +315,7 @@ final class AdminController extends AbstractController
                         try {
                             $this->sendConfirmationEmail($user, $peer, $config, $mailer);
                             $emailsSent++;
-                        } catch (\Throwable $e) {
+                        } catch (TransportExceptionInterface $e) {
                             array_push($errors, $e->getMessage());
                         }
                         break;
@@ -429,7 +430,7 @@ final class AdminController extends AbstractController
                         ->text($body);
                     $mailer->send($email);
                     $emailsSent++;
-                } catch (\Throwable $e) {
+                } catch (TransportExceptionInterface $e) {
                     array_push($emailsFailed, $e->getMessage());
                 }
             }
@@ -459,7 +460,7 @@ final class AdminController extends AbstractController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function admins(Request $request, UserRepository $userRepository,
         EntityManagerInterface $manager, HttpClientInterface $httpClient,
-        MailerInterface $mailer, Security $security): Response {
+        Security $security): Response {
         // Print out the list of admins.
         $requests = new Requests($userRepository, 'ROLE_ADMIN', $security);
         $form = $this->createForm(RequestCollectionType::class, $requests, [
@@ -657,7 +658,7 @@ final class AdminController extends AbstractController
 
     // Helper function to send confirmation emails
     private function sendConfirmationEmail(User $user, WireguardPeer $peer,
-        string $exampleConfig, MailerInterface $mailer): void {
+        string $exampleConfig, TransportInterface $mailer): void {
         // Create the email contents
         $body =
             "Dear {$user->getUsername()},\r\n" .

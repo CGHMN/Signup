@@ -26,7 +26,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
@@ -40,7 +40,7 @@ use App\Entity\User;
 final class SignupController extends AbstractController
 {
     #[Route('/', name: 'app.signup')]
-    public function index(Request $request, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): Response {
+    public function index(Request $request, UserPasswordHasherInterface $passwordHasher, TransportInterface $mailer): Response {
         // Redirect authenticated users to the next page.
         if ($this->isGranted('IS_AUTHENTICATED')) {
             return $this->redirectToRoute('app.next');

@@ -420,7 +420,7 @@ final class AdminController extends AbstractController
                         ->text($body);
                     $mailer->send($email);
                     $emailsSent++;
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     array_push($emailsFailed, $e->getMessage());
                 }
             }

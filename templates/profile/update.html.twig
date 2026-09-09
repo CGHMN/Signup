@@ -34,15 +34,11 @@ both through writing code and providing advice.
 {{ form_start(form) }}
 <table class="data-table">
     <tr>
-        <th colspan="2"><b>Contact Info</b></th>
+        <th colspan="2" style="text-align: center;"><b>Contact Info</b></th>
     </tr>
     <tr>
-        <td>
-            Email Address
-        </td>
-        <td>
-            {{ app.user.email }}
-        </td>
+        <td>Email Address</td>
+        <td>{{ app.user.email }}</td>
     </tr>
     <tr>
         <td>
@@ -64,7 +60,7 @@ both through writing code and providing advice.
     </tr>
     {% if not is_granted('ROLE_ADMIN') %}
         <tr>
-            <th colspan="2"><b>About You</b></th>
+            <th colspan="2" style="text-align: center;"><b>About You</b></th>
         </tr>
         <tr>
             <td>
@@ -95,9 +91,6 @@ both through writing code and providing advice.
             </td>
         </tr>
         <tr>
-            <th colspan="2"><b>Wireguard Peers</b></th>
-        </tr>
-        <tr>
             <td>
                 {{ form_label(form.display) }}
                 {{ form_errors(form.display) }}
@@ -106,11 +99,14 @@ both through writing code and providing advice.
                 {{ form_widget(form.display) }}
             </td>
         </tr>
+        <tr>
+            <th colspan="2" style="text-align: center;"><b>Wireguard Peers</b></th>
+        </tr>
         {% set peerNum = 0 %}
         {% for peer in form.wireguardPeers %}
             {% set peerNum = peerNum + 1 %}
             <tr>
-                <td colspan="2">Wireguard Peer {{ peerNum }}</td>
+                <td colspan="2"><b>Wireguard Peer {{ peerNum }}</b></td>
             </tr>
             <tr>
                 <td>Tunnel IP</td>
@@ -142,6 +138,13 @@ both through writing code and providing advice.
             <tr>
                 <td>Preshared Key</td>
                 <td>{{ peer.vars.data.presharedKey }}</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <a href="https://firmware.cghmn.org/?user_data={{ peer.vars.data.firmwareConfig }}" target="_blank">
+                        Click here to generate an OpenWrt firmware image for this peer.
+                    </a>
+                </td>
             </tr>
         {% endfor %}
     {% endif %}

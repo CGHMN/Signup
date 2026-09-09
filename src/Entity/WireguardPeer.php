@@ -141,4 +141,13 @@ class WireguardPeer
 
         return $this;
     }
+
+    public function getFirmwareConfig(): string
+    {
+        return urlencode(base64_encode(json_encode([
+            'preshared_key' => $this->presharedKey,
+            'tunnel_ip' => $this->tunnelIP,
+            'routed_subnet' => $this->allowedIPs[0]['cidr'],
+        ])));
+    }
 }

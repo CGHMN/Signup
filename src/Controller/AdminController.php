@@ -661,11 +661,6 @@ final class AdminController extends AbstractController
     private function sendConfirmationEmail(User $user, WireguardPeer $peer,
         string $exampleConfig, TransportInterface $mailer): void {
         // Create the email contents
-        $firmwareConfig = urlencode(base64_encode(json_encode([
-            'preshared_key' => $peer->getPresharedKey(),
-            'tunnel_ip' => $peer->getTunnelIP(),
-            'routed_subnet' => $peer->getAllowedIPs()[0]['cidr'],
-        ])));
         $email = (new TemplatedEmail())
             ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
             ->to($user->getEmail())
@@ -676,7 +671,6 @@ final class AdminController extends AbstractController
                 'user' => $user,
                 'peer' => $peer,
                 'exampleConfig' => $exampleConfig,
-                'firmwareConfig' => $firmwareConfig,
             ]);
         $mailer->send($email);
     }

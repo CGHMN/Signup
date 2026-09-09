@@ -664,7 +664,7 @@ final class AdminController extends AbstractController
         $firmwareConfig = urlencode(base64_encode(json_encode([
             'preshared_key' => $peer->getPresharedKey(),
             'tunnel_ip' => $peer->getTunnelIP(),
-            'routed_subnet' => $peer->getAllowedIPs()[0]
+            'routed_subnet' => $peer->getAllowedIPs()[0]['cidr'],
         ])));
         $email = (new TemplatedEmail())
             ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))

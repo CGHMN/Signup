@@ -22,7 +22,7 @@ Dear {{ user.username }},
 Welcome to CGHMN!
 Here are your connection details:
 
-TunnelIP:                {{ peer.tunnelIP }}
+Tunnel IP:               {{ peer.tunnelIP }}
 Wireguard Preshared Key: {{ peer.presharedKey }}
 Routed Subnet:           {{ peer.allowedIPs[0].cidr }}
 
@@ -37,7 +37,7 @@ You can also use our OpenWrt image builder at
 https://firmware.cghmn.org/?user_data={{ firmwareConfig }}
 If you need help with anything,
 feel free to reach out at {{ contactEmail }}
-Once you're connected, you should first visit http://landingpage.retro
+Once you're connected, you should first visit http://landingpage.retro/
 where you can find a plethora of services, tutorials, and other information
 perfect for newcomers.
 Have fun!

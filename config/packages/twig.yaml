@@ -2,6 +2,7 @@ twig:
     file_name_pattern: '*.twig'
     globals:
         discord: '%env(DISCORD_INVITE)%'
+        contactEmail: '%env(CONTACT_EMAIL)%'
 
 when@test:
     twig:

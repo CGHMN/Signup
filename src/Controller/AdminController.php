@@ -35,6 +35,7 @@ use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\UserRepository;
 use App\Repository\WireguardPeerRepository;
@@ -660,32 +661,23 @@ final class AdminController extends AbstractController
     private function sendConfirmationEmail(User $user, WireguardPeer $peer,
         string $exampleConfig, TransportInterface $mailer): void {
         // Create the email contents
-        $body =
-            "Dear {$user->getUsername()},\r\n" .
-            "Welcome to CGHMN!\r\n" .
-            "Here are your connection details:\r\n" .
-            "Tunnel IP: {$peer->getTunnelIP()}\r\n" .
-            "WireGuard Preshared Key: {$peer->getPresharedKey()}\r\n" .
-            "Routed Subnet: {$peer->getAllowedIPs()[0]['cidr']}\r\n" .
-            "Here's an example config you can use:\r\n---\r\n" .
-            "$exampleConfig\r\n---\r\n" .
-            "If you're not sure how to set up your CGHMN Router,\r\n" .
-            "you can find some beginner-friendly instructions at:\r\n" .
-            "https://wiki.cursedsilicon.net/wiki/Signup\r\n" .
-            "If you need help with anything,\r\n" .
-            "feel free to reach out at " .
-            $this->getParameter('app.contactEmail') . "\r\n" .
-            "Once you're connected, you should first visit " .
-            "http://landingpage.retro/\r\n" .
-            "where you can find a plethora of services, tutorials, and " .
-            "other information\r\nperfect for newcomers.\r\n" .
-            "Have fun!\r\n" .
-            "-The CGHMN Team";
-        $email = (new Email())
+        $firmwareConfig = urlencode(base64_encode(json_encode([
+            'preshared_key' => $peer->getPresharedKey(),
+            'tunnel_ip' => $peer->getTunnelIP(),
+            'routed_subnet' => $peer->getAllowedIPs()[0]
+        ])));
+        $email = (new TemplatedEmail())
             ->from(new Address($this->getParameter('app.email'), 'CGHMN User Services'))
             ->to($user->getEmail())
-            ->subject("Welcome to CGHMN!")
-            ->text($body);
+            ->subject('Welcome to CGHMN!')
+            ->htmlTemplate('emails/confirmation.html.twig')
+            ->textTemplate('emails/confirmation.txt.twig')
+            ->context([
+                'user' => $user,
+                'peer' => $peer,
+                'exampleConfig' => $exampleConfig,
+                'firmwareConfig' => $firmwareConfig,
+            ]);
         $mailer->send($email);
     }
 }
